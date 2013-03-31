@@ -1,0 +1,114 @@
+#!/bin/sh
+
+interface=""
+wpaSupConfig=""
+save=false
+
+function main {
+  if checkConnection; then
+    successecho "Computer is already connected, try to force reconnection with -r"
+    exit 0
+  fi
+
+  connect
+
+  if checkConnection
+  then
+    if $save
+    then
+      save
+    fi
+    successecho "Successfully connected wireless network, have fun!"
+  else
+    failecho "Could not connect, check journalctl -xn for info"
+  fi
+}
+
+function connect {
+  sudo systemctl start wconnect.service
+}
+
+function reconnect {
+  sudo systemctl restart wconnect.service
+}
+
+function disconnect {
+  sudo systemctl stop wconnect.service
+}
+
+function checkConnection {
+  if ping -c 1 -W 2 www.google.de >&/dev/null; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function help {
+  echo -e "usage: scriptSetup [COMMANDS]\n
+    possible commands are:\n 
+    \t-c configure systemd files
+    \t-h this help message
+    \t-i specify interface
+    \t-r force reconnect 
+    \t-s save used configuration
+    \t-x terminate connection\n"
+}
+
+function greenecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;32m$@\033[0m"
+}
+
+function redecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;31m$@\033[0m"
+}
+
+function successecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;38m $@\033[0m"
+}
+
+function failecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m"
+}
+
+while getopts "c:hi:rsx" optname
+  do
+    case "$optname" in
+      "c")
+        wpaSupConfig=$OPTARG
+        ;;
+      "h")
+        help
+        exit 0
+        ;;
+      "i")
+        interface=$OPTARG
+        ;;
+      "r")
+        reconnect
+        exit 0
+        ;;
+      "s")
+        save=true
+        ;;
+      "x")
+        disconnect
+        exit 0
+        ;;
+      "?")
+        failecho "Unknown option $OPTARG"
+        exit 1
+        ;;
+      ":")
+        failecho "No argument value for option $OPTARG"
+        exit 1
+        ;;
+      *)
+        # Should not occur
+        failecho "Unknown error while processing options"
+        exit $?
+        ;;
+    esac
+  done
+
+main

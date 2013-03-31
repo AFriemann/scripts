@@ -1,0 +1,70 @@
+#!/bin/sh
+
+# variables
+inputfolder=$PWD
+
+outputfolder=$PWD
+
+filter="*"
+
+success=0
+
+function main {
+  # go to inputfolder to prevent $file from showing folder
+  cd $inputfolder
+  
+  #echo "linking to $outputfolder"
+
+  # iterate over every file in the inputfolder that fits the regex
+  for file in $filter
+  do
+    # link file to outputfolder and pipe stdout&stderr to /dev/null
+    ln -s $inputfolder/$file --target-directory=$outputfolder > /dev/null 2>/dev/null
+  done
+
+  success=1
+}
+
+function helpmsg {
+  echo -e "usage: linkalot [COMMANDS] -o ["/home/$USER"]\n
+            possible commands are:\n
+            \t-i specify input folder (\"./\")
+            \t-f provide filter (standard REGEX, \"*\")
+            \t-h this help message\n"
+}
+
+# Determine if there are any commandline options and execute accordingly
+while getopts "i:o:f:h" optname
+  do
+    case "$optname" in
+      "i")
+        inputfolder=$OPTARG
+        ;;
+      "o")
+        outputfolder=$OPTARG
+        ;;
+      "f")
+        filter=$OPTARG
+        ;;
+      "h")
+        helpmsg
+        exit 0
+        ;;
+      "?")
+        failecho "Unknown option $OPTARG"
+        exit 1
+        ;;
+      ":")
+        failecho "No argument value for option $OPTARG"
+        exit 1
+        ;;
+      *)
+        # Should not occur
+        exit 1
+        ;;
+    esac
+  done
+
+while [[ $success == 0 ]]; do
+  main
+done

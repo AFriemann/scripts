@@ -1,0 +1,28 @@
+#!/bin/sh
+
+currentFolder=$(basename $PWD)
+
+if [ $currentFolder == "src" -o $currentFolder == "build" ]; then
+  cd ..
+fi
+
+if [ ! -d build ]; then
+  mkdir build
+fi
+
+cd build
+
+if [ -d ../src ] 
+  then
+    cmake ../src
+  else
+    cmake ..
+fi
+
+# make project
+if make
+  then
+    exit 0
+  else
+    exit 1
+fi

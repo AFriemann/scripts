@@ -1,0 +1,28 @@
+
+    [Unit]
+    Description=wconnect daemon script
+    Wants=network.target
+    Before=network.target
+    BindsTo=sys-subsystem-net-devices-wlp3s0.device
+    After=sys-subsystem-net-devices-wlp3s0.device
+    
+    [Service]
+    Type=oneshot
+    RemainAfterExit=yes
+    Restart=on-abort
+    
+    ExecStart=/usr/sbin/ip link set wlp3s0 up
+    ExecStart=/usr/sbin/wpa_supplicant -B -Dwext -i wlp3s0 -c /etc/wpa_supplicant.conf # Remove this for wired connections
+    ExecStart=/usr/sbin/dhclient -v wlp3s0
+    
+    ExecStartPost=/usr/bin/cp /usr/lib/systemd/scripts/reconnect.sh /usr/lib/systemd/system-sleep
+    
+    ExecStop=/usr/sbin/dhclient -x wlp3s0
+    ExecStop=/usr/sbin/ip addr flush wlp3s0
+    ExecStop=/usr/sbin/ip link set wlp3s0 down
+    
+    ExecStopPost=/usr/bin/rm /usr/lib/systemd/system-sleep/reconnect.sh
+    
+    [Install]
+    WantedBy=multi-user.target
+   

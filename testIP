@@ -1,0 +1,125 @@
+#!/bin/sh
+
+# 1 if successful
+success=0
+
+# try counter
+tries=0
+
+ # network interface
+interface=wlan0
+
+# where to write the log
+destination=$HOME/.log
+
+# name of the log file
+name="testIP.log"
+
+# quiet mode
+quiet=false
+
+# log mode
+log=false
+
+# verbose mode
+verbose=false
+
+#=========================================================
+
+# saves current public IP
+function getIP {
+  silence="-s"
+
+  if $verbose; then
+    silence="" 
+  fi
+
+  IP=$(curl $silence ifconfig.me)
+}
+
+# saves router for wlan interface
+function getROUTER {
+  ROUTER=$(iwconfig $interface | grep --regexp='ESSID:"[a-z A-Z 0-9]*"' | cut -f2 -d'"')
+}
+
+# saves current date and time
+function getTIME {
+  TIME=$(date +"%d.%m.%y | %H:%M")
+}
+
+function help {
+  echo -e "usage: testIP [COMMANDS]\n
+            possible commands are:\n
+            \t-d set destination for log file (/home/user/.log)
+            \t-h this help message
+            \t-i set the interface to use (wlan0)
+            \t-l logs the output
+            \t-n set the name of the log file (testID.log)
+            \t-q quiet mode
+            \t-v verbose mode\n"
+}
+
+function main {
+  getIP
+  getROUTER
+  getTIME
+
+  data="$TIME: $ROUTER - $IP"
+
+  if !($quiet); then
+    echo $data
+  fi
+
+  if $log; then
+    echo $data >> $destination/$name
+  fi
+}
+
+# parameter handling
+while getopts "d:hi:ln:qv" optname
+    do
+      case "$optname" in
+        "d")
+          # set destination
+          destination=$OPTARG
+          ;;
+        "h")
+          help
+          exit 0
+          ;;
+        "i")
+          #set interface
+          $interface=$OPTARG
+          ;;
+        "l")
+          log=true
+          ;;
+        "n")
+          # set name
+          name=$OPTARG 
+          ;;
+        "q")
+          # set name
+          quiet=true 
+          ;;
+        "v")
+          verbose=true
+          ;;
+        "?")
+          failecho "Unknown option $OPTARG"
+          exit 1
+          ;;
+        ":")
+          failecho "No argument value for option $OPTARG"
+          exit 1
+          ;;
+        *)
+        # Should not occur
+          failecho "Unknown error while processing options"
+          exit 1
+          ;;
+      esac
+    done
+
+
+main

@@ -1,0 +1,132 @@
+#!/bin/sh
+# Authors:  Linus Armakola <linus.armakola@gmail.com>
+#           Christian Schebek <christian@schebek.eu>
+#           Aljosha Friemann <aljosha.friemann@gmail.com>
+
+# Execution booleans
+delete=true
+execute=false
+debug=
+
+# last given argument
+lastargument=${@: -1}
+
+# TODO foo bar
+function help {
+  echo -e "usage: yagcc [COMMANDS] file\n
+            possible commands are:\n
+            \t-e execute output file after compilation (needs to be in working folder)
+            \t-o keep .o file
+            \t-h this help message\n"
+}
+
+# TODO foo bar
+function main {
+  if [[ -f $lastargument && "$lastargument" == *.asm ]]; 
+    then
+      echo "File $lastargument accepted"
+      givenfile=$lastargument 
+
+      prepare
+
+      # set outputfile if nothing is given
+      if [ -z $outputfile ]; then
+        outputfile=$filename
+      fi
+
+      echo "compiling.."
+      compile && finish
+
+      if $execute; then execute; fi
+
+    else
+      echo "No or wrong file given ($lastargument), exiting!"
+      exit 1
+  fi
+}
+
+# TODO foo bar
+function compile {
+  yasm -f elf -p gas -g dwarf2 -o $tmpdir/$filename.o $givenfile
+
+  if [ ! $? ]; then
+      echo "yasm failed for file $givenfile"
+      exit 1
+  fi
+
+  gcc -m32 -g -o $bindir/$outputfile $tmpdir/$filename.o
+}
+
+function execute {
+  if [ -n $debug ] 
+    then
+      echo "Starting $outputfile in debug mode:"
+        gdb -q $bindir/$outputfile
+    else
+      echo "Starting $outputfile:"
+      ./$outputfile
+  fi
+}
+
+function finish {
+    if $delete; then
+      rm -r $tmpdir
+    fi
+}
+
+# crop file name, folder etc., prepare bin folder
+function prepare {
+  # Prepare files and variables
+  filename=$(basename $givenfile | cut -d"." -f1)
+  srcdir=$(dirname $givenfile)
+
+  tmpdir="$srcdir/tmp"
+  if [ ! -e $tmpdir ]; then
+    mkdir $tmpdir
+  fi
+
+  bindir="$srcdir/bin"
+  if [ ! -e $bindir ]; then
+    mkdir $bindir
+  fi
+}
+
+while getopts "dohn:e" optname
+  do
+    case "$optname" in
+      "h")
+        help
+        exit 0
+        ;;
+      "n")
+        # sets the output binary
+        outputfile=$OPTARG
+        ;;
+      "e")
+        # execute compiled file
+        execute=true
+        ;;
+      "o")
+        # keep the .o file
+        delete=false
+        ;;
+      "d")
+        debug="-g dwarf2"
+        ;;
+      "?")
+        failecho "Unknown option $OPTARG"
+        exit 1
+        ;;
+      ":")
+        failecho "No argument value for option $OPTARG"
+        exit 1
+        ;;
+      *)
+      # Should not occur
+        failecho "Unknown error while processing options"
+        exit 1
+        ;;
+    esac
+  done
+
+main

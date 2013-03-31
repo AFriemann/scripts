@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# Two dots :)
+prefix="••"
+
+function successecho () { echo -e "\033[1;34m${prefix}\033[0m\033[1;38m $@\033[0m"; }
+function failecho () { echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m"; }
+
+arguments=$@
+
+for argument in $arguments
+  do
+    if [ ! -f $argument -a ! $argument == "*.cpp" ]; then
+      failecho"File $argument does not exist!"
+      exit 1
+    else
+      successecho "File $argument ok!"
+    fi
+  done
+
+successecho "compiling files in /bin.."
+
+currentFolder=$(basename $PWD)
+
+if [ $currentFolder == "bin" ]; then
+  cd ../src
+elif [ ! $currentFolder == "src" ]; then
+  cd src
+fi
+
+if [ ! -d ../bin ]; then
+  mkdir ../bin
+fi
+
+# compile project
+if c++ $arguments -o ../bin/exe
+  then
+    successecho "All good! Use 'exe' in /bin to start program"
+    exit 0
+  else
+    failecho "Something went horribly wrong! :("
+    exit 1
+fi

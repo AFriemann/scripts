@@ -1,0 +1,141 @@
+#!/bin/sh
+
+# TODO root überprüfen
+
+userhome=/home/$USER
+
+gitfolder=.git
+
+globalfolder=/etc/default
+
+globalgithome=$globalfolder/$gitfolder
+
+localgithome=$userhome/$gitfolder
+
+folders={$userhome/{Downloads,Documents,Code},$localgithome/profiles,$globalgithome/{configs,scripts}} # TODO $userhome testen
+
+repohome=git@repo.schebek.eu
+
+### --------------------------------------------------------- ###
+
+success=0
+
+# method to install packages via pacaur
+function install() {
+  pacaur -S --quiet --noconfirm $@
+}
+
+# method to initiate a git folder & repository
+function readygit {
+  repo=${PWD##*/}
+  git init
+  git remote add origin $repohome:$repo.git
+  git pull origin master
+}
+
+# update pacman mirrors and rank them
+function update-mirrors {
+  pacman -S reflector
+  mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
+  reflector -l 5 --sort rate --save /etc/pacman.d/mirrorlist
+}
+
+# create necessary folders
+function prepare {
+  mkdir -p $folders
+}
+
+# install all programs and scripts
+function install-progs {
+  system="upower tlp tp_smapi zsh cw zsh-syntax-highlighting"
+  alsa="alsa-utils"
+  browser="firefox flashplugin icedtea-web"
+  terminal="rxvt-unicode urxvt-perls"
+  utility="wget uget ranger atool unzip p7zip unrar anything-sync-daemon git ntfs-3g truecrypt feh imagemagick vlc cw dos2unix autocutsel dcfldd zathura{,-pdf-poppler,-ps,-cb,-djvu}"
+  internet="openssh openssl openvpn"
+  xorg="xorg-{server,xinit,setxkbmap,xmodmap,xrandr,xset}"
+  vim="gvim vim-{autoclose,colorsamplerpack,minibufexpl,nerdtree,pathogen,surround,taglist}"
+  windowmanager="i3"
+
+  install $utility $system $vim $alsa $terminal $internet $browser $windowmanager $xorg memtest86+
+}
+
+# setup programs and their configurations
+function setup-progs {
+  #TODO enable stuff in systemd
+  systemctl enable cronie.service
+  #
+  # .zshrc
+  # source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+  # export PATH="/usr/lib/cw:$PATH"
+  #
+  # TODO change asd config so that it syncs ~/.git/profiles/.mozilla in ram
+  # add systemd services (asd, ...)
+  # TODO: ssh
+  ssh-keygen -t rsa 
+  #
+  # append memtest stuff to syslinux cfg
+}
+
+# scripts repo
+function git-scripts {
+  cd $globalgithome
+  # TODO chmod keine lese/schreibrechte
+  readygit
+  ./update
+}
+
+# configs repo
+function git-configs {
+  cd $globalgithome
+  # TODO chmod keine lese/schreibrechte
+  readygit
+  gpg etc/wpa_supplicant.conf.gpg
+  linkalot -f ".*" -o "$userhome"
+  # copy /etc stuff, link /home/$USER stuff
+  rm etc/wpa_supplicant.conf
+}
+
+# profiles repo
+function git-profiles {
+  cd $localgithome
+  readygit
+  linkalot -f ".*" -o "$userhome"
+}
+
+# method to install pacaur from the aur
+function pacaur {
+  # TODO aur mit pacman syntax
+  # TODO testen
+  mkdir /tmp/$USER-pacaur-install
+  cd /tmp/$USER-pacaur-install
+
+  wget http://aur.archlinux.org/packages/co/cower/cower.tar.gz
+  wget https://aur.archlinux.org/packages/pa/pacaur/pacaur.tar.gz
+
+  tar -xf cower.tar.gz
+  tar -xf pacaur.tar.gz
+
+  cd cower
+  makepkg -si
+
+  cd ../pacaur
+  makepkg -si
+
+  cd .. && rm -r {cower,pacaur}
+  rm -r /tmp/$USER-pacaur-install
+}
+
+function main {
+  prepare
+  update-mirrors
+  pacaur
+  install-progs && setup-progs
+  git-scripts && git-configs && git-profiles
+
+  success=1
+}
+
+while [[ success == 0 ]]; do
+  main
+done

@@ -1,0 +1,281 @@
+#!/bin/sh
+# script to update git repository and binaries
+#
+systemdFolder="/usr/lib/systemd"
+bindir=/usr/bin
+wirelessDevice=""
+
+offline=false
+
+# Two dots :)
+prefix="••"
+
+# echo colours and format
+function greenecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;32m$@\033[0m"
+}
+
+function redecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;31m$@\033[0m"
+}
+
+function successecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;38m $@\033[0m"
+}
+
+function failecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m"
+}
+
+function checkRoot {
+  greenecho "checking permissions.."
+
+  if [ "$UID" == 0 ]; then 
+    return 0
+  fi
+
+  return 1
+}
+
+function configure {
+  detectWirelessDevice
+
+  echo -e "
+    [Unit]
+    Description=wconnect daemon script
+    Wants=network.target
+    Before=network.target
+    BindsTo=sys-subsystem-net-devices-$wirelessDevice.device
+    After=sys-subsystem-net-devices-$wirelessDevice.device
+    
+    [Service]
+    Type=oneshot
+    RemainAfterExit=yes
+    Restart=on-abort
+    
+    ExecStart=/usr/sbin/ip link set $wirelessDevice up
+    ExecStart=/usr/sbin/wpa_supplicant -B -Dwext -i $wirelessDevice -c /etc/wpa_supplicant.conf # Remove this for wired connections
+    ExecStart=/usr/sbin/dhclient -v $wirelessDevice
+    
+    ExecStartPost=/usr/bin/cp /usr/lib/systemd/scripts/reconnect.sh /usr/lib/systemd/system-sleep
+    
+    ExecStop=/usr/sbin/dhclient -x $wirelessDevice
+    ExecStop=/usr/sbin/ip addr flush $wirelessDevice
+    ExecStop=/usr/sbin/ip link set $wirelessDevice down
+    
+    ExecStopPost=/usr/bin/rm /usr/lib/systemd/system-sleep/reconnect.sh
+    
+    [Install]
+    WantedBy=multi-user.target
+   " > systemd/system/wconnect.service
+
+   echo -e "
+     #!/bin/sh
+     case $1/$2 in
+      pre/*)
+        exit 0
+        ;;
+      post/*)
+        if ping -c 1 -W 2 www.google.de; then
+          exit 0
+        else
+          exec /usr/sbin/dhclient -v $wirelessDevice
+        fi
+        ;;
+    esac
+   " > systemd/scripts/reconnect.sh
+}
+
+function detectWirelessDevice {
+  greenecho "Attempting to detect wireless interface.."
+ 
+  saveIFS=$IFS
+
+  IFS=$'\n' read wifi0 wifi1 wifi2 <<< "$(ip link | grep -o "w[a-z 0-9]*[0-9]")"
+
+  if [ -z $wifi0 ]
+  then
+    redecho "Can't detect wireless interface, please enter device name: "
+    read wirelessDevice
+    return 0
+  fi
+
+  if [ -z $wifi1 ]
+  then
+    wirelessDevice=$wifi0 
+    greenecho "Set wireless device name to $wirelessDevice"
+  else
+    if [ -z $wifi2 ]
+    then
+      greenecho "Available wireless interfaces: $wifi0 | $wifi1 - enter device name: "
+    else
+      greenecho "Available wireless interfaces: $wifi0 | $wifi1 | $wifi2 - enter device name: "
+    fi
+
+    read wirelessDevice
+  fi
+
+  IFS=$saveIFS
+
+  return 0
+}
+
+function remove {
+  stopSystemd
+  removeSystemd
+  removeBinaries
+}
+
+function removeBinaries {
+  sudo rm $bindir/yagcc
+  sudo rm $bindir/swap
+  sudo rm $bindir/testIP
+  sudo rm $bindir/linkalot
+  sudo rm $bindir/make++
+  sudo rm $bindir/comp++
+  sudo rm $bindir/wconnect
+}
+
+function installBinaries {
+  if [ -f yagcc -a -f swap -a -f testIP -a -f linkalot -a -f make++ -a -f comp++ -a -f wconnect ]
+    then
+      sudo cp yagcc $bindir
+      sudo cp swap $bindir
+      sudo cp testIP $bindir
+      sudo cp linkalot $bindir
+      sudo cp make++ $bindir
+      sudo cp comp++ $bindir
+      sudo cp wconnect $bindir
+      return 0
+    else
+      return 1
+  fi
+}
+
+function removeSystemd {
+  stopSystemd
+ 
+  sudo rm $systemdFolder/system/wconnect.service
+  sudo rm $systemdFolder/scripts/reconnect.sh
+  
+  sudo rm $systemdFolder/system/i3lock*.service
+}
+
+function installSystemd {
+  stopSystemd
+
+  sudo cp systemd/system/wconnect.service $systemdFolder/system
+  sudo cp systemd/scripts/reconnect.sh $systemdFolder/scripts
+  
+  sudo cp systemd/system/i3lock@.service $systemdFolder/system/i3lock@"$USER".service
+}
+
+function stopSystemd {
+  sudo systemctl stop wconnect.service &>/dev/null
+  sudo systemctl disable wconnect.service &>/dev/null
+
+  sudo systemctl stop i3lock@"$USER".service &>/dev/null
+  sudo systemctl disable i3lock@"$USER".service &>/dev/null
+}
+
+function enableSystemd {
+  sudo systemctl enable i3lock@"$USER".service
+
+  sudo systemctl enable wconnect.service
+  sudo systemctl start wconnect.service
+}
+
+function main {
+  if checkRoot; then
+    failecho "Should not run as root!"
+    exit 1
+  fi
+
+  if [ ! $offline ]; then
+    if git pull
+      then
+        successecho "Git repository successfully updated"
+      else
+        if ping -c 1 -W 2 www.google.de >&/dev/null
+          then
+            failecho "No internet connection available! Try -o for offline installation."
+          else
+            failecho "Could not pull current repositories, please check your git configuration or try -o for offline installation."
+        fi
+        exit 1 
+    fi
+  fi
+
+  if installBinaries
+    then
+      successecho "Binaries successfully linked to $bindir"
+    else
+      failecho "Failed copying scripts to $bindir"
+      exit 1 
+  fi
+
+  if installSystemd
+    then
+      successecho "Systemd service file successfully installed, enabling and starting.."
+    else
+      failecho "Something went wrong while attempting to install systemd files.."
+      exit 1
+  fi
+
+  if enableSystemd
+    then
+      successecho "Installation completed successfully, systemd services started and scripts linked to $bindir"
+    else
+      failecho "Something went wrong while attempting to enable and start systemd services.."
+  fi
+}
+
+function help {
+  echo -e "usage: scriptSetup [COMMANDS]\n
+    possible commands are:\n 
+    \t-c configure systemd files
+    \t-f fresh install, includes -r and -c
+    \t-h this help message
+    \t-o offline mode
+    \t-r removes all installed scripts and services\n"
+}
+
+while getopts "cfhor" optname
+  do
+    case "$optname" in
+      "c")
+        configure 
+        exit 0
+        ;;
+      "h")
+        help
+        exit 0
+        ;;
+      "f")
+        remove
+        configure
+        ;;
+      "o")
+        offline=true
+        ;;
+      "r")
+        remove
+        exit 0
+        ;;
+      "?")
+        failecho "Unknown option $OPTARG"
+        exit 1
+        ;;
+      ":")
+        failecho "No argument value for option $OPTARG"
+        exit 1
+        ;;
+      *)
+        # Should not occur
+        failecho "Unknown error while processing options"
+        exit $?
+        ;;
+    esac
+  done
+
+main

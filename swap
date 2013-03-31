@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# swaps two files filenames
+
+# fileA is first, fileB second parameter
+fileA=$1
+fileB=$2
+
+# move fileA to temporary file, change fileB to fileA, change temporary fileA to fileB
+mv $fileA $fileA.$$
+mv $fileB $fileA
+mv $fileA.$$ $fileB

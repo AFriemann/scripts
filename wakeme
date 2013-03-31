@@ -1,0 +1,61 @@
+#!/bin/sh
+
+lastargument=${@: -1}
+
+function main {
+  if [ $lastargument ]; then
+    waketimeinseconds=$(calc $lastargument*3600)
+  else
+    echo "Error: No arguments given!"
+    help
+    exit 1
+  fi
+   
+  if [ $videolink ]; then
+      sudo rtcwake -m mem -s $waketimeinseconds && firefox $videolink
+  elif [ $file ]; then
+      sudo rtcwake -m mem -s $waketimeinseconds && vlc $file
+  else
+      sudo rtcwake -m mem -s $waketimeinseconds 
+  fi
+}
+
+function help {
+  echo -e "usage: wakeme [COMMANDS] time (in hours)\n
+      possible commands:\n
+        -h show this menu\n
+        -l open a link with your browser\n
+        -f open a file with vlc\n"
+}
+
+while getopts "hl:f:" optname
+  do
+    case "$optname" in
+      "h")
+        help
+        exit 0
+        ;;
+      "l")
+        videolink=$OPTARG
+        ;;
+      "f")
+        file=$OPTARG
+        ;;
+      "?")
+        failecho "Unknown option $OPTARG"
+        exit 1
+        ;;
+      ":")
+        failecho "No argument value for option $OPTARG"
+        exit 1
+        ;;
+      *)
+      # Should not occur
+        failecho "Unknown error while processing options"
+        exit 1
+        ;;
+    esac
+  done
+
+
+main
