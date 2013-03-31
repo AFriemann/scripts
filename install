@@ -5,6 +5,7 @@ systemdFolder="/usr/lib/systemd"
 bindir=/usr/bin
 wirelessDevice=""
 
+fresh=false
 offline=false
 
 # Two dots :)
@@ -103,7 +104,6 @@ function detectWirelessDevice {
   if [ -z $wifi1 ]
   then
     wirelessDevice=$wifi0 
-    greenecho "Set wireless device name to $wirelessDevice"
   else
     if [ -z $wifi2 ]
     then
@@ -116,6 +116,8 @@ function detectWirelessDevice {
   fi
 
   IFS=$saveIFS
+  
+  successecho "Set wireless device name to $wirelessDevice"
 
   return 0
 }
@@ -206,23 +208,32 @@ function main {
     fi
   fi
 
+  if $fresh; then
+    greenecho "removing old files and configuring.."
+    remove
+    configure
+  fi
+
+  greenecho "attempting to install binaries.."
   if installBinaries
     then
-      successecho "Binaries successfully linked to $bindir"
+      successecho "Binaries successfully installed to $bindir"
     else
       failecho "Failed copying scripts to $bindir"
       exit 1 
   fi
 
+  greenecho "attempting to install systemd files.."
   if installSystemd
     then
-      successecho "Systemd service file successfully installed, enabling and starting.."
+      successecho "Systemd service file successfully installed"
     else
       failecho "Something went wrong while attempting to install systemd files.."
       exit 1
   fi
 
-  if enableSystemd
+  greenecho "attempting to start systemd services.."
+  if enableSystemd &>/dev/null
     then
       successecho "Installation completed successfully, systemd services started and scripts linked to $bindir"
     else
@@ -252,8 +263,7 @@ while getopts "cfhor" optname
         exit 0
         ;;
       "f")
-        remove
-        configure
+        fresh=true 
         ;;
       "o")
         offline=true
