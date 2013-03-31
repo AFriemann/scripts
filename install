@@ -12,11 +12,11 @@ prefix="••"
 
 # echo colours and format
 function greenecho () { 
-  echo -e "\033[1;34m${prefix}\033[0m\033[1;32m$@\033[0m"
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;32m $@\033[0m"
 }
 
 function redecho () { 
-  echo -e "\033[1;34m${prefix}\033[0m\033[1;31m$@\033[0m"
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m"
 }
 
 function successecho () { 
