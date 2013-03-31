@@ -10,29 +10,47 @@ function main {
     exit 0
   fi
 
-  connect
-
-  if checkConnection
-  then
-    if $save
-    then
+  if connect; then
+    if $save; then
       save
     fi
-    successecho "Successfully connected wireless network, have fun!"
+    exit 0
   else
-    failecho "Could not connect, check journalctl -xn for info"
+    exit 1
+  fi
+}
+
+function determineSuccess {
+  if checkConnection; then
+    successecho "Successfully connected wireless network, have fun!"
+    return 0
+  else
+    failecho "Could not connect, check 'systemctl status wconnect.service' or 'journalctl -xn' for info"
+    return 1
   fi
 }
 
 function connect {
+  greenecho "attempting to start wconnect service"
   sudo systemctl start wconnect.service
+
+  determineSuccess
+  return $?
 }
 
 function reconnect {
+  greenecho "attempting to reconnect to wireless network.." 
   sudo systemctl restart wconnect.service
+
+  if determineSuccess; then
+    return 0
+  else
+    return 1
+  fi
 }
 
 function disconnect {
+  greenecho "attempting to disconnect wireless network.." 
   sudo systemctl stop wconnect.service
 }
 
@@ -86,7 +104,7 @@ while getopts "c:hi:rsx" optname
         ;;
       "r")
         reconnect
-        exit 0
+        exit $?
         ;;
       "s")
         save=true
