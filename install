@@ -161,6 +161,8 @@ function removeSystemd {
   sudo rm $systemdFolder/scripts/reconnect.sh
   
   sudo rm $systemdFolder/system/i3lock*.service
+
+  sudo systemctl --system daemon-reload
 }
 
 function installSystemd {
@@ -170,6 +172,8 @@ function installSystemd {
   sudo cp systemd/scripts/reconnect.sh $systemdFolder/scripts
   
   sudo cp systemd/system/i3lock@.service $systemdFolder/system/i3lock@"$USER".service
+
+  sudo systemctl --system daemon-reload
 }
 
 function stopSystemd {

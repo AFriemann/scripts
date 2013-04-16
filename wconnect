@@ -10,6 +10,12 @@ function main {
     exit 0
   fi
 
+  if checkBlock; then
+    rfkill unblock wifi
+  fi
+
+  disconnect
+
   if connect; then
     if $save; then
       save
@@ -26,6 +32,19 @@ function determineSuccess {
     return 0
   else
     failecho "Could not connect, check 'systemctl status wconnect.service' or 'journalctl -xn' for info"
+    return 1
+  fi
+}
+
+# Check if wifi is blocked and return 0 if true
+function checkBlock { 
+  greenecho "checking rfkill for software block.."
+
+  rfkill list wifi 
+
+  if [ $? == 0 ]; then
+    return 0
+  else
     return 1
   fi
 }
