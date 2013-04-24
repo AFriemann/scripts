@@ -1,6 +1,6 @@
 #!/bin/sh
 
-interface=wlp3s0""
+interface=wlp3s0
 wpaSupConfig=""
 save=false
 
@@ -11,7 +11,7 @@ function main {
   fi
 
   if checkBlock; then
-    rfkill unblock wifi
+    sudo rfkill unblock wifi >&/dev/null
   fi
 
   disconnect
@@ -40,7 +40,7 @@ function determineSuccess {
 function checkBlock { 
   greenecho "checking rfkill for software block.."
 
-  rfkill list wifi 
+  sudo rfkill list wifi >&/dev/null
 
   if [ $? == 0 ]; then
     return 0
@@ -52,6 +52,8 @@ function checkBlock {
 function connect {
   greenecho "attempting to start wconnect@"$interface".service"
   sudo systemctl start wconnect@"$interface".service
+  sudo systemctl start wpa_supplicant@"$interface".service
+  sudo systemctl start dhclient@"$interface".service
 
   determineSuccess
   return $?
@@ -59,17 +61,25 @@ function connect {
 
 function reconnect {
   greenecho "attempting to reconnect to wireless network.." 
-  sudo systemctl restart wconnect@"$interface".service
+  sudo systemctl restart dhclient@"$interface".service
 
   if determineSuccess; then
     return 0
   else
+    disconnect
+    if connect; then
+      if determineSuccess; then
+        return 0
+      fi
+    fi
     return 1
   fi
 }
 
 function disconnect {
   greenecho "attempting to disconnect wireless network.." 
+  sudo systemctl stop dhclient@"$interface".service
+  sudo systemctl stop wpa_supplicant@"$interface".service
   sudo systemctl stop wconnect@"$interface".service
 }
 
@@ -121,7 +131,7 @@ while getopts "c:hi:rsx" optname
         exit 0
         ;;
       "i")
-        interface=wlp3s0$OPTARG
+        interface='wlp3s0'wlp3s0wlp3s0wlp3s0$OPTARG
         ;;
       "r")
         reconnect

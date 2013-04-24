@@ -41,7 +41,7 @@ function checkRoot {
 function configure {
   detectWirelessDevice
 
-  sed -i "s/interface=""/interface="$wirelessDevice"/g" wconnect
+  sed -i "s/interface=\"\"/interface=$wirelessDevice/g" wconnect
 
   echo -e "
     #!/bin/sh
