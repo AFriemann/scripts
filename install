@@ -208,7 +208,7 @@ function main {
   fi
 
   greenecho "attempting to start systemd services.."
-  if enableSystemd &>/dev/null
+  if enableSystemd
     then
       successecho "Installation completed successfully, systemd services started and scripts linked to $bindir"
     else

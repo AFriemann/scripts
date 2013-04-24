@@ -1,16 +1,16 @@
 [Unit]
 Description=wconnect daemon script
-#Wants=network.target
+Wants=network.target
 After=wpa_supplicant@%i.service
-#Before=network.target
-BindsTo=sys-subsystem-net-devices-%I.device
-After=sys-subsystem-net-devices-%I.device
+Before=network.target
+BindsTo=sys-subsystem-net-devices-%i.device
+After=sys-subsystem-net-devices-%i.device
 
 [Service]
-Type=forking
+Type=simple
 Restart=on-abort
 
-ExecStartPre=/bin/cp /usr/lib/systemd/scripts/wc-reconnect.sh /usr/lib/systemd/system-sleep/
+#ExecStartPre=/bin/cp /usr/lib/systemd/scripts/wc-reconnect.sh /usr/lib/systemd/system-sleep/
 ExecStart=/bin/sh /usr/lib/systemd/scripts/wc-reconnect.sh
 
 ExecStop=/usr/bin/killall wc-reconnect.sh
