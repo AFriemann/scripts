@@ -42,22 +42,6 @@ function configure {
   detectWirelessDevice
 
   sed -i "s/interface=\"\"/interface=$wirelessDevice/g" wconnect
-
-  echo -e "
-    #!/bin/sh
-      case $1/$2 in
-        pre/*)
-          exit 0
-          ;;
-        post/*)
-          if ping -c 1 -W 2 www.google.de; then
-            exit 0
-          else
-            exec systemctl restart dhclient@"$wirelessDevice".service
-          fi
-          ;;
-      esac
-   " > systemd/scripts/reconnect.sh
 }
 
 function detectWirelessDevice {
@@ -133,6 +117,7 @@ function removeSystemd {
   sudo rm $systemdFolder/system/wconnect*.service
   sudo rm $systemdFolder/system/dhclient@.service
   sudo rm $systemdFolder/scripts/reconnect.sh
+  sudo rm $systemdFolder/scripts/wc-reconnect.sh
   
   sudo rm $systemdFolder/system/i3lock*.service
 
@@ -143,7 +128,7 @@ function installSystemd {
   stopSystemd
 
   sudo cp systemd/system/wconnect@.service $systemdFolder/system
-  sudo cp systemd/scripts/reconnect.sh $systemdFolder/scripts
+  sudo cp systemd/scripts/wc-reconnect.sh $systemdFolder/scripts
   sudo cp systemd/system/wpa_supplicant@.service $systemdFolder/system
   sudo cp systemd/system/dhclient@.service $systemdFolder/system
   
@@ -200,7 +185,7 @@ function main {
 
   if $fresh; then
     greenecho "removing old files and configuring.."
-    remove
+    remove >&/dev/null
     configure
   fi
 
