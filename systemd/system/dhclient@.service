@@ -1,0 +1,15 @@
+[Unit]
+Description=dhclient daemon script
+StopWhenUnneeded=yes
+    
+[Service]
+Type=forking
+Restart=on-abort
+RestartSec=1
+    
+ExecStart=/usr/sbin/dhclient -v %i
+   
+ExecStop=/usr/sbin/dhclient -x %i
+
+[Install]
+WantedBy=multi-user.target
