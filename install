@@ -41,49 +41,22 @@ function checkRoot {
 function configure {
   detectWirelessDevice
 
-  echo -e "
-    [Unit]
-    Description=wconnect daemon script
-    Wants=network.target
-    Before=network.target
-    BindsTo=sys-subsystem-net-devices-$wirelessDevice.device
-    After=sys-subsystem-net-devices-$wirelessDevice.device
-    
-    [Service]
-    Type=oneshot
-    RemainAfterExit=yes
-    Restart=on-abort
-    
-    ExecStart=/usr/sbin/ip link set $wirelessDevice up
-    ExecStart=/usr/sbin/wpa_supplicant -B -Dwext -i $wirelessDevice -c /etc/wpa_supplicant.conf # Remove this for wired connections
-    ExecStart=/usr/sbin/dhclient -v $wirelessDevice
-    
-    ExecStartPost=/usr/bin/cp /usr/lib/systemd/scripts/reconnect.sh /usr/lib/systemd/system-sleep
-    
-    ExecStop=/usr/sbin/dhclient -x $wirelessDevice
-    ExecStop=/usr/sbin/ip addr flush $wirelessDevice
-    ExecStop=/usr/sbin/ip link set $wirelessDevice down
-    
-    ExecStopPost=/usr/bin/rm /usr/lib/systemd/system-sleep/reconnect.sh
-    
-    [Install]
-    WantedBy=multi-user.target
-   " > systemd/system/wconnect.service
+  sed -i "s/wconnect.service/wconnect@'$wirelessDevice'.service/g" wconnect
 
-   echo -e "
-     #!/bin/sh
-     case $1/$2 in
-      pre/*)
-        exit 0
-        ;;
-      post/*)
-        if ping -c 1 -W 2 www.google.de; then
+  echo -e "
+    #!/bin/sh
+      case $1/$2 in
+        pre/*)
           exit 0
-        else
-          exec /usr/sbin/dhclient -v $wirelessDevice
-        fi
-        ;;
-    esac
+          ;;
+        post/*)
+          if ping -c 1 -W 2 www.google.de; then
+            exit 0
+          else
+            exec /usr/sbin/dhclient -v $wirelessDevice
+          fi
+          ;;
+      esac
    " > systemd/scripts/reconnect.sh
 }
 
@@ -158,6 +131,7 @@ function removeSystemd {
   stopSystemd
  
   sudo rm $systemdFolder/system/wconnect.service
+  sudo rm $systemdFolder/system/wconnect@.service
   sudo rm $systemdFolder/scripts/reconnect.sh
   
   sudo rm $systemdFolder/system/i3lock*.service
@@ -168,10 +142,11 @@ function removeSystemd {
 function installSystemd {
   stopSystemd
 
-  sudo cp systemd/system/wconnect.service $systemdFolder/system
+  sudo cp systemd/system/wconnect@.service $systemdFolder/system
   sudo cp systemd/scripts/reconnect.sh $systemdFolder/scripts
+  sudo cp systemd/system/wpa_supplicant@.service $systemdFolder/system
   
-  sudo cp systemd/system/i3lock@.service $systemdFolder/system/i3lock@"$USER".service
+  sudo cp systemd/system/i3lock@.service $systemdFolder/system/
 
   sudo systemctl --system daemon-reload
 }
@@ -187,8 +162,10 @@ function stopSystemd {
 function enableSystemd {
   sudo systemctl enable i3lock@"$USER".service
 
-  sudo systemctl enable wconnect.service
-  sudo systemctl start wconnect.service
+  sudo systemctl enable wpa_supplicant@"$wirelessDevice".service
+  sudo systemctl enable wconnect@"$wirelessDevice".service
+  sudo systemctl start wpa_supplicant@"$wirelessDevice".service
+  sudo systemctl start wconnect@"$wirelessDevice".service
 }
 
 function main {

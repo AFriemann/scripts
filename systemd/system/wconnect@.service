@@ -1,0 +1,27 @@
+
+    [Unit]
+    Description=wconnect daemon script
+    Wants=network.target
+    Before=network.target
+    BindsTo=sys-subsystem-net-devices-%I.device
+    After=sys-subsystem-net-devices-%I.device
+    
+    [Service]
+    Type=oneshot
+    RemainAfterExit=yes
+    Restart=on-abort
+    
+    ExecStart=/usr/sbin/ip link set %I up
+    ExecStart=/usr/sbin/dhclient -v %I 
+    
+    ExecStartPost=/usr/bin/cp /usr/lib/systemd/scripts/reconnect.sh /usr/lib/systemd/system-sleep
+    
+    ExecStop=/usr/sbin/dhclient -x %I 
+    ExecStop=/usr/sbin/ip addr flush %I 
+    ExecStop=/usr/sbin/ip link set %I down
+    
+    ExecStopPost=/usr/bin/rm /usr/lib/systemd/system-sleep/reconnect.sh
+    
+    [Install]
+    WantedBy=multi-user.target
+   

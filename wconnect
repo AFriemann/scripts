@@ -31,7 +31,7 @@ function determineSuccess {
     successecho "Successfully connected wireless network, have fun!"
     return 0
   else
-    failecho "Could not connect, check 'systemctl status wconnect.service' or 'journalctl -xn' for info"
+    failecho "Could not connect, check 'systemctl status wconnect@'wlp3s0'.service' or 'journalctl -xn' for info"
     return 1
   fi
 }
@@ -50,8 +50,8 @@ function checkBlock {
 }
 
 function connect {
-  greenecho "attempting to start wconnect service"
-  sudo systemctl start wconnect.service
+  greenecho "attempting to start wconnect@'wlp3s0'.service"
+  sudo systemctl start wconnect@'wlp3s0'.service
 
   determineSuccess
   return $?
@@ -59,7 +59,7 @@ function connect {
 
 function reconnect {
   greenecho "attempting to reconnect to wireless network.." 
-  sudo systemctl restart wconnect.service
+  sudo systemctl restart wconnect@'wlp3s0'.service
 
   if determineSuccess; then
     return 0
@@ -70,7 +70,7 @@ function reconnect {
 
 function disconnect {
   greenecho "attempting to disconnect wireless network.." 
-  sudo systemctl stop wconnect.service
+  sudo systemctl stop wconnect@'wlp3s0'.service
 }
 
 function checkConnection {
