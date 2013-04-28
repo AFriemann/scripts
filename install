@@ -41,7 +41,7 @@ function checkRoot {
 function configure {
   detectWirelessDevice
 
-  sed -i "s/interface=\"\"/interface=$wirelessDevice/g" wconnect
+  sed -i "s/interface=wifidev/interface=$wirelessDevice/g" wconnect
 }
 
 function detectWirelessDevice {
@@ -128,9 +128,9 @@ function installSystemd {
   stopSystemd
 
   sudo cp systemd/system/wconnect@.service $systemdFolder/system
-  sudo cp systemd/scripts/wc-reconnect.sh $systemdFolder/scripts
-  sudo cp systemd/system/wpa_supplicant@.service $systemdFolder/system
-  sudo cp systemd/system/dhclient@.service $systemdFolder/system
+  #sudo cp systemd/scripts/wc-reconnect.sh $systemdFolder/scripts
+  #sudo cp systemd/system/wpa_supplicant@.service $systemdFolder/system
+  #sudo cp systemd/system/dhclient@.service $systemdFolder/system
   
   sudo cp systemd/system/i3lock@.service $systemdFolder/system/
 
@@ -154,12 +154,12 @@ function stopSystemd {
 function enableSystemd {
   sudo systemctl enable i3lock@"$USER".service
 
-  sudo systemctl enable wpa_supplicant@"$wirelessDevice".service
-  sudo systemctl enable dhclient@"$wirelessDevice".service
+  #sudo systemctl enable wpa_supplicant@"$wirelessDevice".service
+  #sudo systemctl enable dhclient@"$wirelessDevice".service
   sudo systemctl enable wconnect@"$wirelessDevice".service
   sudo systemctl start wconnect@"$wirelessDevice".service
-  sudo systemctl start wpa_supplicant@"$wirelessDevice".service
-  sudo systemctl start dhclient@"$wirelessDevice".service
+  #sudo systemctl start wpa_supplicant@"$wirelessDevice".service
+  #sudo systemctl start dhclient@"$wirelessDevice".service
 }
 
 function main {

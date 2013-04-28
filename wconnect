@@ -1,104 +1,188 @@
 #!/bin/sh
 
+hostname=$(hostname)
+
+verbosity=">&/dev/null"
 interface=wlp3s0
-wpaSupConfig=""
+wpaconf="/etc/wpa_supplicant.conf"
+essid=""
+dhcp=dhclient
+checkhost=www.google.de
+
+open=false
 save=false
+quiet=false
 
 function main {
+  if ! checkSyntax; then
+    failecho "please check your call syntax!"
+    exit 1
+  fi
+
+  greenecho "pinging $checkhost .."
   if checkConnection; then
-    successecho "Computer is already connected, try to force reconnection with -r"
+    successecho "$hostname is already connected, nothing to do here!"
     exit 0
   fi
 
+  failecho "$hostname is not connected!"
+
+  greenecho "checking rfkill for software block.."
   if checkBlock; then
-    sudo rfkill unblock wifi >&/dev/null
+    failecho "wifi device seems to be blocked, trying to unblock"
+    unblock
   fi
 
+  greenecho "terminating old services.."
   disconnect
 
-  if connect; then
+  greenecho "starting relevant services.."
+  connect
+
+  if checkConnection; then
+    successecho "connection successfully established!"
     if $save; then
+      greenecho "saving current configuration.."
       save
     fi
+    successecho "exiting wconnect"
     exit 0
   else
+    failecho "could not connect! see 'journalctl -xn' or enhance verbosity for more info"
+    failecho "exiting wconnect"
     exit 1
   fi
 }
 
-function determineSuccess {
-  if checkConnection; then
-    successecho "Successfully connected wireless network, have fun!"
-    return 0
-  else
-    failecho "Could not connect, check 'systemctl status wconnect@"$interface".service' or 'journalctl -xn' for info"
-    return 1
+function checkSyntax {
+  if $open; then
+    if [ -z "$essid" ]; then
+      return 1
+    fi
   fi
+
+  return 0
+}
+
+function checkConnection {
+  if sh -c "ping -c 1 -W 2 $checkhost $verbosity"; then
+    return 0
+  fi
+
+  return 1
 }
 
 # Check if wifi is blocked and return 0 if true
 function checkBlock { 
-  greenecho "checking rfkill for software block.."
-
-  sudo rfkill list wifi >&/dev/null
-
-  if [ $? == 0 ]; then
+  if sh -c "sudo rfkill list wifi | grep yes $verbosity"; then
     return 0
-  else
-    return 1
   fi
+
+  return 1
 }
+
+function unblock {
+  sh -c "sudo rfkill unblock wifi $verbosity"
+}
+
+function startDaemon {
+  if sh -c "sudo systemctl start wconnect@"$interface".service $verbosity"; then
+    return 0
+  fi
+
+  return 1
+}
+
+function stopDaemon {
+  if sh -c "sudo systemctl stop wconnect@"$interface".service $verbosity"; then
+    return 0
+  fi
+
+  return 1
+}
+
+function startWPA {
+  #if sudo systemctl start wpa_supplicant@"$interface".service; then
+  if sh -c "sudo wpa_supplicant -B -Dwext -i $interface -c $wpaconf $verbosity"; then
+    return 0
+  fi
+
+  return 1
+}
+
+function stopWPA {
+  #if sudo systemctl stop wpa_supplicant@"$interface".service; then
+  if sh -c "sudo wpa_cli terminate $verbosity"; then
+    return 0
+  fi
+
+  return 1
+}
+
+function startDHCP {
+  #if sudo systemctl start $dhcp@"$interface".service; then
+  if sh -c "sudo dhclient -v $interface $verbosity"; then
+    return 0
+  fi
+
+  return 1
+}
+
+function stopDHCP {
+  #if sudo systemctl stop $dhcp@"$interface".service; then
+  if sh -c "sudo killall $dhcp $verbosity"; then
+    return 0
+  fi
+
+  return 1
+}
+
+function startIWCONFIG {
+  if sudo iwconfig $interface essid $essid; then
+    return 0
+  fi
+
+  return 1
+}
+
+#function stopIWCONFIG {
+  # TODO ?
+#}
 
 function connect {
-  greenecho "attempting to start wconnect@"$interface".service"
-  sudo systemctl start wconnect@"$interface".service
-  sudo systemctl start wpa_supplicant@"$interface".service
-  sudo systemctl start dhclient@"$interface".service
-
-  determineSuccess
-  return $?
-}
-
-function reconnect {
-  greenecho "attempting to reconnect to wireless network.." 
-  sudo systemctl restart dhclient@"$interface".service
-
-  if determineSuccess; then
-    return 0
+  if $open; then
+    startIWCONFIG
   else
-    disconnect
-    if connect; then
-      if determineSuccess; then
-        return 0
-      fi
-    fi
-    return 1
+    startWPA
   fi
+
+  startDHCP
+  #startDaemon
 }
 
 function disconnect {
-  greenecho "attempting to disconnect wireless network.." 
-  sudo systemctl stop dhclient@"$interface".service
-  sudo systemctl stop wpa_supplicant@"$interface".service
-  sudo systemctl stop wconnect@"$interface".service
+  #stopDaemon  
+  stopDHCP
+  stopWPA
+#  stopIWCONFIG
 }
 
-function checkConnection {
-  if ping -c 1 -W 2 www.google.de >&/dev/null; then
-    return 0
-  else
-    return 1
-  fi
+function reconnect {
+  disconnect
+  connect
 }
 
 function help {
-  echo -e "usage: scriptSetup [COMMANDS]\n
+  echo -e "usage: wconnect [COMMANDS]\n
     possible commands are:\n 
-    \t-c configure systemd files
+    \t-e provide an essid to connect to 
     \t-h this help message
     \t-i specify interface
+    \t-o open network (requires a essid)
+    \t-q quiet mode
     \t-r force reconnect 
-    \t-s save used configuration
+    \t-s save used configuration (todo)
+    \t-v verbosity: 0 - nothing, 1 - stdout, 2 - stdout & stderr
     \t-x terminate connection\n"
 }
 
@@ -120,25 +204,46 @@ function failecho () {
   echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m"
 }
 
-while getopts "c:hi:rsx" optname
+while getopts "e:hi:oqrsv:x" optname
   do
     case "$optname" in
-      "c")
-        wpaSupConfig=$OPTARG
+      "e")
+        essid=$OPTARG
         ;;
       "h")
         help
         exit 0
         ;;
       "i")
-        interface='wlp3s0'wlp3s0wlp3s0wlp3s0$OPTARG
+        interface=$OPTARG
+        ;;
+      "o")
+        open=true
+        ;;
+      "q")
+        quiet=true
         ;;
       "r")
-        reconnect
-        exit $?
+        disconnect
         ;;
       "s")
         save=true
+        ;;
+      "v")
+        case "$OPTARG" in
+          0)
+            verbosity=">&/dev/null"
+            ;;
+          1)
+            verbosity="2>/dev/null"
+            ;;
+          2)
+            verbosity=""
+            ;;
+          *)
+            failecho "only values 0,1 and 2 are allowed. Defaulting to 0 (no output)"
+            ;;
+        esac
         ;;
       "x")
         disconnect
@@ -160,4 +265,8 @@ while getopts "c:hi:rsx" optname
     esac
   done
 
-main
+if $quiet; then
+  main >&/dev/null
+else
+  main
+fi

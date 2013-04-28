@@ -1,0 +1,12 @@
+[Unit]
+Description=wconnect reload daemon script
+Wants=wconnect@%i.service
+    
+[Service]
+Type=oneshot
+Restart=on-abort
+    
+ExecStart=/bin/sh /usr/lib/systemd/scripts/wc-reconnect.sh
+    
+[Install]
+WantedBy=multi-user.target
