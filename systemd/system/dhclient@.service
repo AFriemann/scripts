@@ -1,6 +1,6 @@
 [Unit]
 Description=dhclient daemon script
-StopWhenUnneeded=yes
+#StopWhenUnneeded=yes
     
 [Service]
 Type=forking

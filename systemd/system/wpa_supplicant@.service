@@ -2,10 +2,14 @@
 Description=WPA supplicant
 
 [Service]
-Type=dbus
-BusName=fi.epitest.hostap.WPASupplicant
-ExecStart=/usr/sbin/wpa_supplicant -u -i%I -c /etc/wpa_supplicant.conf
+#Type=dbus
+Type=forking
+Restart=on-abort
+#BusName=fi.epitest.hostap.WPASupplicant
+ExecStart=/usr/sbin/wpa_supplicant -B -Dwext -i %i -c /etc/wpa_supplicant.conf
+
+ExecStop=/usr/sbin/wpa_cli terminate
 
 [Install]
 WantedBy=multi-user.target
-Alias=dbus-fi.epitest.hostap.WPASupplicant.service
+#Alias=dbus-fi.epitest.hostap.WPASupplicant.service

@@ -80,7 +80,6 @@ function detectWirelessDevice {
 }
 
 function remove {
-  stopSystemd
   removeSystemd
   removeBinaries
 }
@@ -113,6 +112,7 @@ function installBinaries {
 
 function removeSystemd {
   stopSystemd
+  disableSystemd
  
   sudo rm $systemdFolder/system/wconnect*.service
   sudo rm $systemdFolder/system/dhclient@.service
@@ -126,40 +126,45 @@ function removeSystemd {
 
 function installSystemd {
   stopSystemd
+  disableSystemd
 
-  sudo cp systemd/system/wconnect@.service $systemdFolder/system
-  #sudo cp systemd/scripts/wc-reconnect.sh $systemdFolder/scripts
-  #sudo cp systemd/system/wpa_supplicant@.service $systemdFolder/system
-  #sudo cp systemd/system/dhclient@.service $systemdFolder/system
+  #sudo cp systemd/system/wconnect@.service $systemdFolder/system
+  sudo cp systemd/system/wpa_supplicant@.service $systemdFolder/system
+  sudo cp systemd/system/dhclient@.service $systemdFolder/system
   
   sudo cp systemd/system/i3lock@.service $systemdFolder/system/
 
   sudo systemctl --system daemon-reload
 }
 
+function startSystemd {
+  #sudo systemctl start wconnect@"$wirelessDevice".service
+  sudo systemctl start wpa_supplicant@"$wirelessDevice".service
+  sudo systemctl start dhclient@"$wirelessDevice".service
+}
+
 function stopSystemd {
-  sudo systemctl stop wconnect* &>/dev/null
-  sudo systemctl disable wconnect* &>/dev/null
-
-  sudo systemctl stop wpa_supplicant* &>/dev/null
-  sudo systemctl disable wpa_supplicant* &>/dev/null
-
-  sudo systemctl stop dhclient* &>/dev/null
-  sudo systemctl disable dhclient* &>/dev/null
-
   sudo systemctl stop i3lock@"$USER".service &>/dev/null
-  sudo systemctl disable i3lock@"$USER".service &>/dev/null
+
+  #sudo systemctl stop wconnect* &>/dev/null
+  sudo systemctl stop dhclient* &>/dev/null
+  sudo systemctl stop wpa_supplicant* &>/dev/null
 }
 
 function enableSystemd {
   sudo systemctl enable i3lock@"$USER".service
 
-  #sudo systemctl enable wpa_supplicant@"$wirelessDevice".service
-  #sudo systemctl enable dhclient@"$wirelessDevice".service
-  sudo systemctl enable wconnect@"$wirelessDevice".service
-  sudo systemctl start wconnect@"$wirelessDevice".service
-  #sudo systemctl start wpa_supplicant@"$wirelessDevice".service
-  #sudo systemctl start dhclient@"$wirelessDevice".service
+  sudo systemctl enable wpa_supplicant@"$wirelessDevice".service
+  sudo systemctl enable dhclient@"$wirelessDevice".service
+  #sudo systemctl enable wconnect@"$wirelessDevice".service
+}
+
+function disableSystemd {
+  #sudo systemctl disable wconnect* &>/dev/null
+  sudo systemctl disable wpa_supplicant* &>/dev/null
+  sudo systemctl disable dhclient* &>/dev/null
+
+  sudo systemctl disable i3lock@"$USER".service &>/dev/null
 }
 
 function main {
@@ -207,8 +212,9 @@ function main {
       exit 1
   fi
 
-  greenecho "attempting to start systemd services.."
-  if enableSystemd
+  greenecho "attempting to enable and start systemd services.."
+  enableSystemd
+  if startSystemd
     then
       successecho "Installation completed successfully, systemd services started and scripts linked to $bindir"
     else
