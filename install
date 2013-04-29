@@ -117,7 +117,7 @@ function removeSystemd {
   sudo rm $systemdFolder/system/wconnect*.service
   sudo rm $systemdFolder/system/dhclient*.service
   sudo rm $systemdFolder/scripts/reconnect.sh
-  sudo rm $systemdFolder/scripts/wc-reconnect.sh
+  sudo rm $systemdFolder/scripts/wc-reconnect
   
   sudo rm $systemdFolder/system/i3lock*.service
 
@@ -128,10 +128,10 @@ function installSystemd {
   stopSystemd
   disableSystemd
 
-  sudo cp systemd/system/wconnect.service $systemdFolder/system
+  sudo cp systemd/system/wconnect@.service $systemdFolder/system/
   sudo cp systemd/system/wpa_supplicant@.service $systemdFolder/system/
   sudo cp systemd/system/dhclient@.service $systemdFolder/system/
-  sudo cp systemd/scripts/wc-reconnect.sh $systemdFolder/scripts/
+  sudo cp systemd/scripts/wc-reconnect $systemdFolder/scripts/
   
   sudo cp systemd/system/i3lock@.service $systemdFolder/system/
 
@@ -139,9 +139,9 @@ function installSystemd {
 }
 
 function startSystemd {
-  sudo systemctl start wconnect.service
-  sudo systemctl start wpa_supplicant@"$wirelessDevice".service
-  sudo systemctl start dhclient@"$wirelessDevice".service
+  sudo systemctl start wconnect@"$wirelessDevice".service
+  #sudo systemctl start wpa_supplicant@"$wirelessDevice".service
+  #sudo systemctl start dhclient@"$wirelessDevice".service
 }
 
 function stopSystemd {
@@ -155,9 +155,9 @@ function stopSystemd {
 function enableSystemd {
   sudo systemctl enable i3lock@"$USER".service
 
-  sudo systemctl enable wpa_supplicant@"$wirelessDevice".service
-  sudo systemctl enable dhclient@"$wirelessDevice".service
-  sudo systemctl enable wconnect.service
+ # sudo systemctl enable wpa_supplicant@"$wirelessDevice".service
+ # sudo systemctl enable dhclient@"$wirelessDevice".service
+  sudo systemctl enable wconnect@"$wirelessDevice".service
 }
 
 function disableSystemd {

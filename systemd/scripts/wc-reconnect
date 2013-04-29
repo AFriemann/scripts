@@ -1,5 +1,12 @@
 #!/bin/sh
 
+function infWconnect {
+  while true; do
+    wconnect
+    sleep 10
+  done
+}
+
 # runs when out of sleep
 case / in
   pre/*)
@@ -20,3 +27,5 @@ case / in
     exit 0
     ;;
 esac
+
+infWconnect &
