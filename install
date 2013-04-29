@@ -2,7 +2,8 @@
 # script to update git repository and binaries
 #
 systemdFolder="/usr/lib/systemd"
-bindir=/usr/bin
+bindir="/usr/bin"
+srcdir="src/"
 wirelessDevice=""
 
 fresh=false
@@ -95,19 +96,15 @@ function removeBinaries {
 }
 
 function installBinaries {
-  if [ -f yagcc -a -f swap -a -f testIP -a -f linkalot -a -f make++ -a -f comp++ -a -f wconnect ]
-    then
-      sudo cp yagcc $bindir
-      sudo cp swap $bindir
-      sudo cp testIP $bindir
-      sudo cp linkalot $bindir
-      sudo cp make++ $bindir
-      sudo cp comp++ $bindir
-      sudo cp wconnect $bindir
-      return 0
-    else
-      return 1
-  fi
+  cd src
+  sudo cp yagcc $bindir
+  sudo cp swap $bindir
+  sudo cp testIP $bindir
+  sudo cp linkalot $bindir
+  sudo cp make++ $bindir
+  sudo cp comp++ $bindir
+  sudo cp wconnect $bindir
+  cd ..
 }
 
 function removeSystemd {
@@ -128,12 +125,14 @@ function installSystemd {
   stopSystemd
   disableSystemd
 
+  cd src
   sudo cp systemd/system/wconnect@.service $systemdFolder/system/
   sudo cp systemd/system/wpa_supplicant@.service $systemdFolder/system/
   sudo cp systemd/system/dhclient@.service $systemdFolder/system/
   sudo cp systemd/scripts/wc-reconnect $systemdFolder/scripts/
   
-  sudo cp systemd/system/i3lock@.service $systemdFolder/system/
+  sudo cp $srcdir/systemd/system/i3lock@.service $systemdFolder/system/
+  cd ..
 
   sudo systemctl --system daemon-reload
 }
