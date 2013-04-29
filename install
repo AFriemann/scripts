@@ -115,7 +115,7 @@ function removeSystemd {
   disableSystemd
  
   sudo rm $systemdFolder/system/wconnect*.service
-  sudo rm $systemdFolder/system/dhclient@.service
+  sudo rm $systemdFolder/system/dhclient*.service
   sudo rm $systemdFolder/scripts/reconnect.sh
   sudo rm $systemdFolder/scripts/wc-reconnect.sh
   
@@ -128,9 +128,10 @@ function installSystemd {
   stopSystemd
   disableSystemd
 
-  #sudo cp systemd/system/wconnect@.service $systemdFolder/system
-  sudo cp systemd/system/wpa_supplicant@.service $systemdFolder/system
-  sudo cp systemd/system/dhclient@.service $systemdFolder/system
+  sudo cp systemd/system/wconnect.service $systemdFolder/system
+  sudo cp systemd/system/wpa_supplicant@.service $systemdFolder/system/
+  sudo cp systemd/system/dhclient@.service $systemdFolder/system/
+  sudo cp systemd/scripts/wc-reconnect.sh $systemdFolder/scripts/
   
   sudo cp systemd/system/i3lock@.service $systemdFolder/system/
 
@@ -138,7 +139,7 @@ function installSystemd {
 }
 
 function startSystemd {
-  #sudo systemctl start wconnect@"$wirelessDevice".service
+  sudo systemctl start wconnect.service
   sudo systemctl start wpa_supplicant@"$wirelessDevice".service
   sudo systemctl start dhclient@"$wirelessDevice".service
 }
@@ -146,7 +147,7 @@ function startSystemd {
 function stopSystemd {
   sudo systemctl stop i3lock@"$USER".service &>/dev/null
 
-  #sudo systemctl stop wconnect* &>/dev/null
+  sudo systemctl stop wconnect* &>/dev/null
   sudo systemctl stop dhclient* &>/dev/null
   sudo systemctl stop wpa_supplicant* &>/dev/null
 }
@@ -156,15 +157,15 @@ function enableSystemd {
 
   sudo systemctl enable wpa_supplicant@"$wirelessDevice".service
   sudo systemctl enable dhclient@"$wirelessDevice".service
-  #sudo systemctl enable wconnect@"$wirelessDevice".service
+  sudo systemctl enable wconnect.service
 }
 
 function disableSystemd {
-  #sudo systemctl disable wconnect* &>/dev/null
-  sudo systemctl disable wpa_supplicant* &>/dev/null
-  sudo systemctl disable dhclient* &>/dev/null
+  sudo systemctl disable wconnect*
+  sudo systemctl disable wpa_supplicant*  
+  sudo systemctl disable dhclient*
 
-  sudo systemctl disable i3lock@"$USER".service &>/dev/null
+  sudo systemctl disable i3lock@"$USER".service
 }
 
 function main {

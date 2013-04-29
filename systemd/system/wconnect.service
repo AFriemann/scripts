@@ -1,0 +1,17 @@
+[Unit]
+Description=wconnect daemon service
+Wants=dhclient@.service wpa_supplicant@.service
+#After=dhclient@.service wpa_supplicant@.service
+
+[Service]
+Type=simple
+Restart=on-abort
+
+ExecStartPre=/bin/cp /usr/lib/systemd/scripts/wc-reconnect.sh /usr/lib/systemd/system-sleep/
+ExecStart=/bin/sh /usr/lib/systemd/scripts/wc-reconnect.sh
+
+ExecStop=/usr/bin/killall wc-reconnect.sh
+ExecStopPost=/bin/rm /usr/lib/systemd/system-sleep/wc-reconnect.sh
+
+[Install]
+WantedBy=multi.user.target
