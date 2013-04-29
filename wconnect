@@ -103,7 +103,7 @@ function stopDaemon {
 
 function startWPA {
   #if sudo systemctl start wpa_supplicant@"$interface".service; then
-  if sh -c "sudo wpa_supplicant -B -Dwext -i $interface -c $wpaconf $verbosity"; then
+  if sh -c "sudo systemctl start wpa_supplicant@"$interface".service $verbosity"; then
     return 0
   fi
 
@@ -112,7 +112,7 @@ function startWPA {
 
 function stopWPA {
   #if sudo systemctl stop wpa_supplicant@"$interface".service; then
-  if sh -c "sudo wpa_cli terminate $verbosity"; then
+  if sh -c "sudo systemctl stop wpa_supplicant@"$interface".service $verbosity"; then
     return 0
   fi
 
@@ -121,7 +121,7 @@ function stopWPA {
 
 function startDHCP {
   #if sudo systemctl start $dhcp@"$interface".service; then
-  if sh -c "sudo dhclient -v $interface $verbosity"; then
+  if sh -c "sudo systemctl start $dhcp@"$interface".service $verbosity"; then
     return 0
   fi
 
@@ -130,7 +130,7 @@ function startDHCP {
 
 function stopDHCP {
   #if sudo systemctl stop $dhcp@"$interface".service; then
-  if sh -c "sudo killall $dhcp $verbosity"; then
+  if sh -c "sudo systemctl stop $dhcp@"$interface".service $verbosity"; then
     return 0
   fi
 
