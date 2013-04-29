@@ -32,6 +32,16 @@ function main {
     failecho "wifi device seems to be blocked, trying to unblock"
     unblock
   fi
+  
+  if checkWPA; then
+    greenecho "trying to restart $dhcp since $interface is already set up.."
+    startDHCP
+    if checkConnection; then
+      finish
+      return 0
+    fi
+    redecho "failed to connect, trying full reconnect.."
+  fi
 
   greenecho "terminating old services.."
   disconnect
@@ -40,17 +50,19 @@ function main {
   connect
 
   if checkConnection; then
-    successecho "connection successfully established!"
-    if $save; then
-      greenecho "saving current configuration.."
-      save
-    fi
-    successecho "exiting wconnect"
-    exit 0
-  else
-    failecho "could not connect! see 'journalctl -xn' or enhance verbosity for more info"
-    failecho "exiting wconnect"
-    exit 1
+    finish
+    return 0
+  fi
+
+
+  return 1
+}
+
+function finish {
+  successecho "connection successfully established!"
+  if $save; then
+    greenecho "saving current configuration.."
+    save
   fi
 }
 
@@ -65,84 +77,64 @@ function checkSyntax {
 }
 
 function checkConnection {
-  if sh -c "ping -c 1 -W 2 $checkhost $verbosity"; then
-    return 0
-  fi
+  run "ping -c 1 -W 2 $checkhost $verbosity"
+  return $?
+}
 
-  return 1
+function checkWPA {
+  run "systemctl status wpa_supplicant@"$interface".service"
+  return $?
+}
+
+function checkDHCP {
+  run "systemctl status $dhcp@"$interface".service"
+  return $?
 }
 
 # Check if wifi is blocked and return 0 if true
 function checkBlock { 
-  if sh -c "sudo rfkill list wifi | grep yes $verbosity"; then
-    return 0
-  fi
-
-  return 1
+  run "rfkill list wifi | grep yes"
+  return $?
 }
 
 function unblock {
-  sh -c "sudo rfkill unblock wifi $verbosity"
+  run "rfkill unblock wifi"
+  return $?
 }
 
 function startDaemon {
-  if sh -c "sudo systemctl start wconnect@"$interface".service $verbosity"; then
-    return 0
-  fi
-
-  return 1
+  run "systemctl start wconnect@"$interface".service"
+  return $?
 }
 
 function stopDaemon {
-  if sh -c "sudo systemctl stop wconnect@"$interface".service $verbosity"; then
-    return 0
-  fi
-
-  return 1
+  run "systemctl stop wconnect@"$interface".service"
+  return $?
 }
 
 function startWPA {
-  #if sudo systemctl start wpa_supplicant@"$interface".service; then
-  if sh -c "sudo systemctl start wpa_supplicant@"$interface".service $verbosity"; then
-    return 0
-  fi
-
-  return 1
+  run "systemctl start wpa_supplicant@"$interface".service"
+  return $?
 }
 
 function stopWPA {
-  #if sudo systemctl stop wpa_supplicant@"$interface".service; then
-  if sh -c "sudo systemctl stop wpa_supplicant@"$interface".service $verbosity"; then
-    return 0
-  fi
-
-  return 1
+  run "systemctl stop wpa_supplicant@"$interface".service"
+  return $?
 }
 
 function startDHCP {
-  #if sudo systemctl start $dhcp@"$interface".service; then
-  if sh -c "sudo systemctl start $dhcp@"$interface".service $verbosity"; then
-    return 0
-  fi
-
-  return 1
+  run "systemctl start $dhcp@"$interface".service"
+  return $?
 }
 
 function stopDHCP {
-  #if sudo systemctl stop $dhcp@"$interface".service; then
-  if sh -c "sudo systemctl stop $dhcp@"$interface".service $verbosity"; then
-    return 0
-  fi
-
-  return 1
+  run "systemctl stop $dhcp@"$interface".service"
+  return $?
 }
 
 function startIWCONFIG {
-  if sudo iwconfig $interface essid $essid; then
-    return 0
-  fi
-
-  return 1
+  run "iwconfig $interface essid $essid"
+  return $?
 }
 
 #function stopIWCONFIG {
@@ -170,6 +162,11 @@ function disconnect {
 function reconnect {
   disconnect
   connect
+}
+
+function run () {
+  sh -c "sudo $@ $verbosity"
+  return $?
 }
 
 function help {
@@ -266,7 +263,18 @@ while getopts "e:hi:oqrsv:x" optname
   done
 
 if $quiet; then
-  main >&/dev/null
+  if main >&/dev/null; then
+    successecho "exiting wconnect"
+    exit 0
+  fi
 else
-  main
+  if main; then
+    successecho "exiting wconnect"
+    exit 0
+  fi
 fi
+
+failecho "could not connect! see 'journalctl -xn' or enhance verbosity for more info"
+failecho "exiting wconnect"
+exit 1
+
