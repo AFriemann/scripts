@@ -1,0 +1,277 @@
+#!/bin/sh
+# Original Version by Armin <netzverweigerer@gmail.com>
+# Additional Authors: Aljosha <aljsoha.friemann@gmail.com>
+
+#TODO fehler ausgabe falls kein internet verfügbar
+# dhclient nach essid änderung neu ausführen TODO systemd script
+
+# network interface
+interface=wlan0
+
+# interface driver
+driver=wext
+
+# host to ping to check internet connection
+checkhost="www.google.de"
+
+# number of tries
+tries_num="4"
+
+# program for dhcp
+dhcp="dhclient"
+
+# standard wpa config file
+wpaconfig="/etc/wpa_supplicant.conf"
+
+# verbose mode
+verbose=false
+
+# daemon mode
+daemon_=false
+sleeptime="10m"
+
+# save network configuration
+save=false
+
+# execute script after connection
+exscript=false
+
+#===================================================
+
+verbosity=&>/dev/null
+verbosity2=&>/dev/null
+
+failed=false
+wpasupON=false
+dhcpON=false
+tries=0
+
+function main {
+    if checkRoot $verbosity2; then
+      failecho "need to be root, exiting."
+      exit 1
+    fi
+
+    if checkConnection $verbosity2; then
+      successecho "wifi is already connected."
+      exit 0
+    fi
+
+    if checkBlock $verbosity2 
+      then
+        greenecho "wifi blocked, attempting to unblock.."
+        rfkill unblock wifi $verbosity2
+        if checkBlock $verbosity2 
+          then
+            failecho "wifi seems blocked by hardware, try turning it on manually"
+            exit 1
+        fi
+        successecho "successfully unblocked wifi."
+    fi
+
+    checkServices
+
+    if ! $wpasupON
+      then
+        systemctl start wpa_supplicant.service
+
+
+    if startWPASupplicant $verbosity2 
+      then
+        successecho "wpa_supplicant startup successfull"  
+      else
+        failecho "wpa_supplicant startup failed.."
+    fi
+
+    if startDHCP $verbosity2 
+      then
+        successecho "$dhcp startup successfull"  
+      else
+        failecho "$dhcp startup failed.."
+    fi
+
+    if checkConnection $verbosity2 
+      then
+        successecho "wifi successfully connected"
+      else
+        failecho "no connection could be established.."
+    fi
+
+    if $exscript; then
+      sh -c $script $verbosity
+    fi
+}
+
+function checkRoot {
+  greenecho "checking permissions.."
+
+  if [ "$UID" != 0 ]; then 
+    return 0
+  fi
+
+  return 1
+}
+
+# Check if wifi is blocked and return 0 if true
+function checkBlock { 
+  greenecho "checking rfkill for software block.."
+
+  rfkill list wifi 
+
+  if [ $? == 0 ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function checkConnection {
+  greenecho "checking connection.."
+
+  ping -W2 -c1 $checkhost
+
+  if [ $? == 0 ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function checkServices {
+  if wpa_cli status; then
+    wpasupON=true
+  fi
+
+  if pidof $dhcp; then
+    dhcpON=true
+  fi
+}
+
+function startWPASupplicant {
+  greenecho "attempting to start wpa_supplicant.."
+
+  if wpa_supplicant -B -Dwext -i $interface -c $wpaconfig; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function startDHCP {
+  greenecho "attempting to start $dhcp.."
+
+  if $dhcp -v $interface; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# echo help message
+function help {
+  echo -e "usage: wconnect [COMMANDS]\n
+            possible commands are:\n
+            \t-x shutdown wlan and stop dhcp
+            \t-r restart wlan connection and adapter
+            \t-e provide essid
+            \t-p provide psk for WPA1/2 (needs essid)
+            \t-s save provided wlan credentials
+            \t-i Specify the interface (wlan0)
+            \t-c Specify the wpa configuration file (/etc/wpa_supplicant.conf)
+            \t-a Execute a script after connection has been established
+            \t-h this help message\n"
+}
+
+# Two dots :)
+prefix="••"
+
+# echo colours and format
+function greenecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;32m$@\033[0m"
+}
+
+function redecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;31m$@\033[0m"
+}
+
+function successecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;38m $@\033[0m"
+}
+
+function failecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m"
+}
+
+# Determine if there are any commandline options and execute accordingly
+  while getopts "xre:p:si:c:hv:a:q" optname
+    do
+      case "$optname" in
+        "h")
+          help
+          exit 0
+          ;;
+        "i")
+          interface=$OPTARG
+          ;;
+        "c")
+          wpaconfig=$OPTARG
+          ;;
+        "e")
+          essid=$OPTARG
+          ;;
+        "p")
+          psk=$OPTARG
+          ;;
+        "q")
+          quiet=true
+          ;;
+        "s")
+          $save=true
+          ;;
+        "v")
+          if [ $OPTARG == 0]
+            then
+              # nothing
+            elif [ $OPTARG >= 2]
+              then
+                verbosity=""
+                verbosity2=""
+            else
+              then
+                verbosity=""
+          fi
+          ;;
+        "a")
+          exscript=true
+          script=$OPTARG
+          ;;
+        "x")
+          root # check if root/sudo
+          successecho "Trying to stop wpa_supplicant, $dhcp and bring $interface down"
+
+          if kill; then # kill stuff and echo success if termination worked fine
+            greenecho "Successfully terminated connection."
+          fi
+          exit 0
+          ;;
+        "r")
+          terminate $dhclient
+          connectDHCP
+          ;;
+        "?")
+          failecho "Unknown option $OPTARG"
+          exit 1
+          ;;
+        ":")
+          failecho "No argument value for option $OPTARG"
+          exit 1
+          ;;
+        *)
+          # Should not occur
+          failecho "Unknown error while processing options"
+          exit $?
+          ;;
+      esac
+    done
+
+main $verbosity
