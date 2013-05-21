@@ -98,12 +98,22 @@ function removeBinaries {
 function installBinaries {
   cd src
   sudo cp yagcc $bindir
+  sudo chmod 755 $bindir/yagcc
   sudo cp swap $bindir
+  sudo chmod 755 $bindir/swap
   sudo cp testIP $bindir
+  sudo chmod 755 $bindir/testIP
   sudo cp linkalot $bindir
+  sudo chmod 755 $bindir/linkalot
   sudo cp make++ $bindir
+  sudo chmod 755 $bindir/make++
   sudo cp comp++ $bindir
+  sudo chmod 755 $bindir/comp++
   sudo cp wconnect $bindir
+  sudo chmod 755 $bindir/wconnect
+  sudo cp comphs $bindir
+  sudo chmod 755 $bindir/comphs
+
   cd ..
 }
 

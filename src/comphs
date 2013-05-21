@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# Two dots :)
+prefix="••"
+
+function successecho () { echo -e "\033[1;34m${prefix}\033[0m\033[1;38m $@\033[0m"; }
+function failecho () { echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m"; }
+
+files=""
+folderChange=false
+currentFolder=$(pwd)
+
+match () {
+  if [[ "$1" =~ [a-zA-Z0-9]+\.l*hs ]]; then
+    return 0
+  fi
+  return 1
+}
+
+function main () {
+  echo "$@"
+  # check if compiled file is in same folder as current
+  if [ ! "$(dirname $1)" == "." ]; then
+    # if folders are differend push current folder and change to file directory
+    echo "changing folder"
+    folderChange=true
+    pushd
+    cd $(dirname $1)
+  fi
+
+  # create build dir if necessary
+  if [ ! -d build ]; then
+    mkdir build
+  fi
+
+  ghc --make -threaded -outputdir "build/" $@
+
+  if [ $? != 0 ]; then
+    failecho "something went wrong while compiling $arguments, exiting.."
+    exit 1
+  fi
+
+  if $folderChange; then
+    popd
+  fi
+
+  exit 0
+}
+
+for f in $@
+do
+  if match $f; then
+    if [ ! -f $f ]; then
+      failecho "File $f not found, exiting"
+      exit 1
+    else
+      files="$files $f"
+    fi
+  fi
+done
+
+main $files
