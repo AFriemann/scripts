@@ -1,2 +1,4 @@
-*/build/*
-*/bin/*
+src/*/build/*
+src/*/bin/*
+*.hi
+*.o
