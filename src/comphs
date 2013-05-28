@@ -6,6 +6,7 @@ prefix="••"
 function successecho () { echo -e "\033[1;34m${prefix}\033[0m\033[1;38m $@\033[0m"; }
 function failecho () { echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m"; }
 
+
 files=""
 folderChange=false
 currentFolder=$(pwd)
@@ -17,17 +18,25 @@ match () {
   return 1
 }
 
-function main () {
-  echo "$@"
+function checkFiles () {
   # check if compiled file is in same folder as current
   if [ ! "$(dirname $1)" == "." ]; then
+    return 1
+  else
+    return 0
+  fi
+}
+
+function main () {
+  #echo "$@"
+  if  [ ! checkFiles $1 ]; then
     # if folders are differend push current folder and change to file directory
     echo "changing folder"
     folderChange=true
     pushd
     cd $(dirname $1)
   fi
-
+  
   # create build dir if necessary
   if [ ! -d build ]; then
     mkdir build
@@ -47,6 +56,13 @@ function main () {
   exit 0
 }
 
+function help () {
+  echo -e "usage: wconnect [COMMANDS]\n
+    possible commands are:\n 
+    \t-h|--help show this help message
+    \t-t|--test test compilation\n"
+}
+
 for f in $@
 do
   if match $f; then
@@ -58,5 +74,15 @@ do
     fi
   fi
 done
+
+case "$1" in
+  -t|--test)
+    test $files
+    exit $?
+    ;;
+  -h|--help)
+    help
+    break;;
+esac
 
 main $files

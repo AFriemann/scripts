@@ -43,6 +43,7 @@ function configure {
   detectWirelessDevice
 
   sed -i "s/interface=wifidev/interface=$wirelessDevice/g" wconnect
+  sed -i "s/interface=wlan0/interface=$wirelessDevice/g" testIP
 }
 
 function detectWirelessDevice {

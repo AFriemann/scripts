@@ -4,11 +4,11 @@ Wants=dhclient@%i.service wpa_supplicant@%i.service
 After=dhclient@%i.service wpa_supplicant@%i.service
 
 [Service]
-Type=forking
+Type=simple
 Restart=on-abort
 
 #ExecStartPre=/bin/cp /usr/lib/systemd/scripts/wc-reconnect /usr/lib/systemd/system-sleep/
-ExecStart=/usr/lib/systemd/scripts/wc-reconnect
+#ExecStart=/usr/lib/systemd/scripts/wc-reconnect
 
 #ExecStop=/usr/bin/killall wc-reconnect && /usr/bin/wconnect -x
 ExecStop=/usr/bin/wconnect -x
