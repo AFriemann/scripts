@@ -54,7 +54,8 @@ function install-progs {
   utility="wget uget ranger atool unzip p7zip unrar anything-sync-daemon git ntfs-3g truecrypt feh imagemagick vlc cw dos2unix autocutsel dcfldd zathura{,-pdf-poppler,-ps,-cb,-djvu}"
   internet="openssh openssl openvpn"
   xorg="xorg-{server,xinit,setxkbmap,xmodmap,xrandr,xset}"
-  vim="gvim vim-{align,autoclose,blockhl,colorsamplerpack,cpp,lustyjuggler,minibufexpl,neocomplcache,nerdtree,securemodelines,tabular-git,taglist,tasklist,verilog_systemverilog}"
+  vim="gvim vim-{colorsamplerpack,systemd,verilog_systemverilog}"
+  eclipse="eclipse eclipse-cdt eclim-git"
   windowmanager="i3"
 
   install $utility $system $vim $alsa $terminal $internet $browser $windowmanager $xorg memtest86+

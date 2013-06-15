@@ -1,0 +1,19 @@
+#!/bin/sh
+
+name=""
+folder=""
+fresh=true
+
+function main {
+  if $fresh; then
+    mkdir -p $folder
+    cd $folder
+    mkdir {bin,src}
+  else
+    cd $folder
+  fi
+
+  cp ~/.vim/.ycm_extra_conf.py ./
+  touch .project
+
+}

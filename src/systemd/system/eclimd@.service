@@ -1,0 +1,12 @@
+[Unit]
+Description=eclim service file
+
+[Service]
+Type=simple
+Restart=on-abort
+
+ExecStart=/usr/bin/su -c "/usr/share/eclipse/eclimd" %i
+ExecStop=/usr/bin/su -c "/usr/share/eclipse/eclimd -command shutdown" %i
+
+[Install]
+WantedBy=multi-user.target

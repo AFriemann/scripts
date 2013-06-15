@@ -10,6 +10,7 @@ function failecho () { echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m";
 files=""
 folderChange=false
 currentFolder=$(pwd)
+srcfolder=""
 
 match () {
   if [[ "$1" =~ [a-zA-Z0-9]+\.l*hs ]]; then
@@ -36,13 +37,17 @@ function main () {
     pushd
     cd $(dirname $1)
   fi
-  
-  # create build dir if necessary
-  if [ ! -d build ]; then
-    mkdir build
-  fi
 
-  ghc --make -threaded -outputdir "build/" $@
+  if [ "$currentFolder" == "src" ]; then
+    cd ..
+    srcfolder="src"
+    # create build dir if necessary
+    if [ ! -d build ]; then
+      mkdir build
+    fi
+  fi
+  
+  ghc --make -threaded -outputdir "build/" $srcfolder/$@
 
   if [ $? != 0 ]; then
     failecho "something went wrong while compiling $arguments, exiting.."
@@ -54,6 +59,10 @@ function main () {
   fi
 
   exit 0
+}
+
+function test () {
+  ghc 
 }
 
 function help () {
