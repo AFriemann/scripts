@@ -82,38 +82,31 @@ function detectWirelessDevice {
 }
 
 function remove {
-  removeSystemd
+#  removeSystemd
   removeBinaries
 }
 
 function removeBinaries {
-  sudo rm $bindir/yagcc
-  sudo rm $bindir/swap
-  sudo rm $bindir/testIP
-  sudo rm $bindir/linkalot
-  sudo rm $bindir/make++
-  sudo rm $bindir/comp++
-  sudo rm $bindir/wconnect
+  cd src
+
+  for file in *; do
+    if [ -f $file ]; then
+      sudo rm $bindir/$file
+    fi
+  done
+
+  cd ..
 }
 
 function installBinaries {
   cd src
-  sudo cp yagcc $bindir
-  sudo chmod 755 $bindir/yagcc
-  sudo cp swap $bindir
-  sudo chmod 755 $bindir/swap
-  sudo cp testIP $bindir
-  sudo chmod 755 $bindir/testIP
-  sudo cp linkalot $bindir
-  sudo chmod 755 $bindir/linkalot
-  sudo cp make++ $bindir
-  sudo chmod 755 $bindir/make++
-  sudo cp comp++ $bindir
-  sudo chmod 755 $bindir/comp++
-  sudo cp wconnect $bindir
-  sudo chmod 755 $bindir/wconnect
-  sudo cp comphs $bindir
-  sudo chmod 755 $bindir/comphs
+
+  for file in *; do
+    if [ -f $file ]; then
+      cp $file $bindir/$file
+      chmod 755 $bindir/$file
+    fi
+  done
 
   cd ..
 }
@@ -214,23 +207,23 @@ function main {
       exit 1 
   fi
 
-  greenecho "attempting to install systemd files.."
-  if installSystemd
-    then
-      successecho "Systemd service file successfully installed"
-    else
-      failecho "Something went wrong while attempting to install systemd files.."
-      exit 1
-  fi
+  # greenecho "attempting to install systemd files.."
+  # if installSystemd
+  #   then
+  #     successecho "Systemd service file successfully installed"
+  #   else
+  #     failecho "Something went wrong while attempting to install systemd files.."
+  #     exit 1
+  # fi
 
-  greenecho "attempting to enable and start systemd services.."
-  enableSystemd
-  if startSystemd
-    then
-      successecho "Installation completed successfully, systemd services started and scripts linked to $bindir"
-    else
-      failecho "Something went wrong while attempting to enable and start systemd services.."
-  fi
+  # greenecho "attempting to enable and start systemd services.."
+  # #enableSystemd
+  # if startSystemd
+  #   then
+  #     successecho "Installation completed successfully, systemd services started and scripts linked to $bindir"
+  #   else
+  #     failecho "Something went wrong while attempting to enable and start systemd services.."
+  # fi
 }
 
 function help {
