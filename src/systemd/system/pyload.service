@@ -1,0 +1,14 @@
+[Unit]
+Description=Downloadtool for One-Click-Hoster written in python.
+After=network.target
+
+[Service]
+Type=forking
+PIDFile=/home/aljosha/.pyload/pyload.pid
+ExecStart=/usr/bin/pyLoadCore --daemon
+KillSignal=SIGQUIT
+User=aljosha
+
+
+[Install]
+WantedBy=multi-user.target
