@@ -5,7 +5,7 @@
 
 wireless_device=""
 verbosity="&>/dev/null"
-dhcp=dhclient
+dhcp="dhclient -v"
 quiet=false
 
 # Two dots :)
@@ -28,10 +28,14 @@ function failecho () {
   echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m" 
 }
 
-function root {
+function delimiter () {
+  echo -e "\033[1;34m•••••••••••••••••••$@"
+}
+
+function root () {
   if [ "$UID" != 0 ]; then 
     me=$(dirname $0)/$(basename $0)
-    sudo $me
+    sudo $me $@
     exit 0
   fi
 
@@ -44,7 +48,7 @@ function run () {
 }
 
 function detectWirelessDevice {
-  greenecho "Attempting to detect wireless interface.."
+  greenecho "attempting to detect wireless interface.."
  
   saveIFS=$IFS
 
@@ -52,7 +56,7 @@ function detectWirelessDevice {
 
   if [ -z $wifi0 ]
   then
-    redecho "Can't detect wireless interface, please enter device name: "
+    redecho "can't detect wireless interface, please enter device name: "
     read wireless_device
     return 0
   fi
@@ -63,9 +67,9 @@ function detectWirelessDevice {
   else
     if [ -z $wifi2 ]
     then
-      greenecho "Available wireless interfaces: $wifi0 | $wifi1 - enter device name: "
+      greenecho "available wireless interfaces: $wifi0 | $wifi1 - enter device name: "
     else
-      greenecho "Available wireless interfaces: $wifi0 | $wifi1 | $wifi2 - enter device name: "
+      greenecho "available wireless interfaces: $wifi0 | $wifi1 | $wifi2 - enter device name: "
     fi
 
     read wireless_device
@@ -73,18 +77,29 @@ function detectWirelessDevice {
 
   IFS=$saveIFS
   
-  successecho "Set wireless device name to $wireless_device"
+  successecho "set wireless device name to $wireless_device"
 
   return 0
 }
 
 function connect {
+  greenecho "starting wpa_supplicant.."
   run "wpa_supplicant -B -Dwext -c /etc/wpa_supplicant.conf -i $wireless_device"
-  run "$dhcp $wireless_device"
+  if [ $? -ne 0 -a $? -ne 255 ]; then
+    failecho "failed to start wpa_supplicant!"
+  fi
+
+  greenecho "starting dhclient.."
+  if ! run "$dhcp $wireless_device"; then
+    failecho "failed to start $dhcp!"
+  fi
 }
 
 function disconnect {
+  greenecho "terminating wpa_supplicant.."
   run "wpa_cli terminate"
+
+  greenecho "terminating dhclient.."
   run "$dhcp -x"
 }
 
@@ -96,23 +111,26 @@ function connected {
   return 1
 }
 
-function main {
+function main () {
   if connected; then
     greenecho "already connected, try reconnecting if you really want to."
     exit 0
   fi
 
-  root
+  root $@
 
-  detectWirelessDevice 
+  if [ ! $wireless_device ]; then
+    detectWirelessDevice 
+  fi
 
-  tries=0
+  tries=1
   success=false
 
-  greenecho "trying to connect.."
+  greenecho "trying to connect $wireless_device.."
 
-  while [[ tries -lt 3 ]];
+  while [[ tries -lt 4 ]];
   do
+    delimiter " $tries".
     connect
     if connected; then
       success=true
@@ -142,7 +160,7 @@ function help {
     \t-x terminate connection\n"
 }
 
-while getopts "hi:qrv:x" optname
+while getopts "hi:qrvx" optname
 do
   case "$optname" in
     "h")
@@ -159,34 +177,23 @@ do
       disconnect
       ;;
     "v")
-      case "$OPTARG" in
-        1)
-          verbosity="2>/dev/null"
-          ;;
-        2)
-          verbosity=""
-          ;;
-        *)
-          failecho "only values 0,1 and 2 are allowed. Defaulting to 1 (only stdout)"
-          verbosity="2>/dev/null"
-          ;;
-      esac
+      verbosity=""
       ;;
     "x")
       disconnect
       exit 0
       ;;
     "?")
-      failecho "Unknown option $OPTARG"
+      failecho "unknown option $OPTARG"
       exit 1
       ;;
     ":")
-      failecho "No argument value for option $OPTARG"
+      failecho "no argument value for option $OPTARG"
       exit 1
       ;;
     *)
       # Should not occur
-      failecho "Unknown error while processing options"
+      failecho "unknown error while processing options"
       exit $?
       ;;
   esac
@@ -194,9 +201,9 @@ done
 
 
 if $quiet; then
-  main &>/dev/null
+  main $@ &>/dev/null
 else
-  main
+  main $@
 fi
 
 exit 0
