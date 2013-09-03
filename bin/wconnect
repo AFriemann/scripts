@@ -36,6 +36,10 @@ function root {
   return 0
 }
 
+function run () {
+  $@ $verbosity 
+}
+
 function detectWirelessDevice {
   greenecho "Attempting to detect wireless interface.."
  
@@ -72,17 +76,17 @@ function detectWirelessDevice {
 }
 
 function connect {
-  wpa_supplicant -B -Dwext -c /etc/wpa_supplicant.conf -i $wireless_device
-  $dhcp $wireless_device
+  run wpa_supplicant -B -Dwext -c /etc/wpa_supplicant.conf -i $wireless_device
+  run $dhcp $wireless_device
 }
 
 function disconnect {
-  wpa_cli terminate
-  $dhcp -x
+  run wpa_cli terminate
+  run $dhcp -x
 }
 
 function connected {
-  if ping -c 1 -W 1 www.google.de &>/dev/null; then
+  if run ping -c 1 -W 1 www.google.de; then
     return 0
   fi
 
@@ -90,14 +94,14 @@ function connected {
 }
 
 function main {
-  if connected $verbosity; then
+  if run connected; then
     greenecho "already connected, try reconnecting if you really want to."
     exit 0
   fi
 
   root
 
-  detectWirelessDevice $verbosity
+  run detectWirelessDevice 
 
   tries=0
   success=0
@@ -106,12 +110,12 @@ function main {
 
   while [[ tries -lt 3 ]];
   do
-    connect $verbosity
-    if connected $verbosity; then
+    connect
+    if connected; then
       success=1
       break 
     fi
-    disconnect $verbosity
+    disconnect
     let tries=tries+1
   done
 

@@ -3,7 +3,6 @@
 #
 systemdFolder="/usr/lib/systemd"
 bindir="/usr/bin"
-srcdir="src/"
 wirelessDevice=""
 
 fresh=false
@@ -29,77 +28,36 @@ function failecho () {
   echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m"
 }
 
-function checkRoot {
-  greenecho "checking permissions.."
-
-  if [ "$UID" == 0 ]; then 
-    return 0
+function root {
+  if [ "$UID" != 0 ]; then 
+    me=$(dirname $0)/$(basename $0)
+    successecho "executing $me as root"
+    $me
+    exit 0
   fi
-
-  return 1
-}
-
-function configure {
-  detectWirelessDevice
-
-  sed -i "s/interface=wifidev/interface=$wirelessDevice/g" wconnect
-  sed -i "s/interface=wlan0/interface=$wirelessDevice/g" testIP
-}
-
-function detectWirelessDevice {
-  greenecho "Attempting to detect wireless interface.."
- 
-  saveIFS=$IFS
-
-  IFS=$'\n' read wifi0 wifi1 wifi2 <<< "$(ip link | grep -o "w[a-z 0-9]*[0-9]")"
-
-  if [ -z $wifi0 ]
-  then
-    redecho "Can't detect wireless interface, please enter device name: "
-    read wirelessDevice
-    return 0
-  fi
-
-  if [ -z $wifi1 ]
-  then
-    wirelessDevice=$wifi0 
-  else
-    if [ -z $wifi2 ]
-    then
-      greenecho "Available wireless interfaces: $wifi0 | $wifi1 - enter device name: "
-    else
-      greenecho "Available wireless interfaces: $wifi0 | $wifi1 | $wifi2 - enter device name: "
-    fi
-
-    read wirelessDevice
-  fi
-
-  IFS=$saveIFS
-  
-  successecho "Set wireless device name to $wirelessDevice"
 
   return 0
 }
 
 function remove {
-#  removeSystemd
+  removeSystemd
   removeBinaries
 }
 
-function removeBinaries {
+function remove_binaries {
   cd src
 
-  for file in *; do
+  for file in bin/*; do
     if [ -f $file ]; then
-      sudo rm $bindir/$file
+      rm $bindir/$file
     fi
   done
 
   cd ..
 }
 
-function installBinaries {
-  cd src
+function install_binaries {
+  cd bin 
 
   for file in *; do
     if [ -f $file ]; then
@@ -111,95 +69,91 @@ function installBinaries {
   cd ..
 }
 
-function removeSystemd {
+function remove_systemd {
   stopSystemd
   disableSystemd
  
-  sudo rm $systemdFolder/system/wconnect*.service
-  sudo rm $systemdFolder/system/dhclient*.service
-  sudo rm $systemdFolder/scripts/reconnect.sh
-  sudo rm $systemdFolder/scripts/wc-reconnect
+  rm $systemdFolder/system/wconnect*.service
+  rm $systemdFolder/system/dhclient*.service
+  rm $systemdFolder/scripts/reconnect.sh
+  rm $systemdFolder/scripts/wc-reconnect
   
-  sudo rm $systemdFolder/system/i3lock*.service
+  rm $systemdFolder/system/i3lock*.service
 
-  sudo systemctl --system daemon-reload
+  systemctl --system daemon-reload
 }
 
-function installSystemd {
+function install_systemd {
   stopSystemd
   disableSystemd
 
   cd src
-  sudo cp systemd/system/wconnect@.service $systemdFolder/system/
-  sudo cp systemd/system/wpa_supplicant@.service $systemdFolder/system/
-  sudo cp systemd/system/dhclient@.service $systemdFolder/system/
-  sudo cp systemd/scripts/wc-reconnect $systemdFolder/scripts/
+  cp systemd/system/wconnect@.service $systemdFolder/system/
+  cp systemd/system/wpa_supplicant@.service $systemdFolder/system/
+  cp systemd/system/dhclient@.service $systemdFolder/system/
+  cp systemd/scripts/wc-reconnect $systemdFolder/scripts/
   
-  sudo cp $srcdir/systemd/system/i3lock@.service $systemdFolder/system/
+  cp $srcdir/systemd/system/i3lock@.service $systemdFolder/system/
   cd ..
 
-  sudo systemctl --system daemon-reload
+  systemctl --system daemon-reload
 }
 
-function startSystemd {
-  sudo systemctl start wconnect@"$wirelessDevice".service
-  #sudo systemctl start wpa_supplicant@"$wirelessDevice".service
-  #sudo systemctl start dhclient@"$wirelessDevice".service
+function start_systemd {
+  #systemctl start wconnect@"$wirelessDevice".service
+  #systemctl start wpa_supplicant@"$wirelessDevice".service
+  #systemctl start dhclient@"$wirelessDevice".service
+  return 0
 }
 
-function stopSystemd {
-  sudo systemctl stop i3lock@"$USER".service &>/dev/null
+function stop_systemd {
+  #systemctl stop i3lock@"$USER".service &>/dev/null
 
-  sudo systemctl stop wconnect* &>/dev/null
-  sudo systemctl stop dhclient* &>/dev/null
-  sudo systemctl stop wpa_supplicant* &>/dev/null
+  #systemctl stop wconnect* &>/dev/null
+  #systemctl stop dhclient* &>/dev/null
+  #systemctl stop wpa_supplicant* &>/dev/null
+  return 0
 }
 
-function enableSystemd {
-  sudo systemctl enable i3lock@"$USER".service
+function enable_systemd {
+  #systemctl enable i3lock@"$USER".service
 
- # sudo systemctl enable wpa_supplicant@"$wirelessDevice".service
- # sudo systemctl enable dhclient@"$wirelessDevice".service
-  sudo systemctl enable wconnect@"$wirelessDevice".service
+  #systemctl enable wpa_supplicant@"$wirelessDevice".service
+  #systemctl enable dhclient@"$wirelessDevice".service
+  #systemctl enable wconnect@"$wirelessDevice".service
+  return 0
 }
 
-function disableSystemd {
-  sudo systemctl disable wconnect*
-  sudo systemctl disable wpa_supplicant*  
-  sudo systemctl disable dhclient*
+function disable_systemd {
+  #systemctl disable wconnect*
+  #systemctl disable wpa_supplicant*  
+  #systemctl disable dhclient*
 
-  sudo systemctl disable i3lock@"$USER".service
+  #systemctl disable i3lock@"$USER".service
+  return 0
+}
+
+function online {
+  if ping -c 1 -W 1 www.google.de >/dev/null; then
+    return 0
+  fi
+  
+  return 1
 }
 
 function main {
-  if checkRoot; then
-    failecho "Should not run as root!"
-    exit 1
-  fi
-
-  if [ ! $offline ]; then
-    if git pull
-      then
-        successecho "Git repository successfully updated"
-      else
-        if ping -c 1 -W 2 www.google.de >&/dev/null
-          then
-            failecho "No internet connection available! Try -o for offline installation."
-          else
-            failecho "Could not pull current repositories, please check your git configuration or try -o for offline installation."
-        fi
-        exit 1 
+  root
+  
+  if online; then
+    if git pull; then
+      successecho "Git repository successfully updated"
     fi
   fi
 
-  if $fresh; then
-    greenecho "removing old files and configuring.."
-    remove >&/dev/null
-    configure
-  fi
-
+  remove
+  
   greenecho "attempting to install binaries.."
-  if installBinaries
+  if install_binaries
     then
       successecho "Binaries successfully installed to $bindir"
     else
@@ -224,53 +178,48 @@ function main {
   #   else
   #     failecho "Something went wrong while attempting to enable and start systemd services.."
   # fi
+
+  return 0
 }
 
 function help {
   echo -e "usage: scriptSetup [COMMANDS]\n
     possible commands are:\n 
-    \t-c configure systemd files
-    \t-f fresh install, includes -r and -c
     \t-h this help message
-    \t-o offline mode
     \t-r removes all installed scripts and services\n"
 }
 
-while getopts "cfhor" optname
-  do
-    case "$optname" in
-      "c")
-        configure 
-        exit 0
-        ;;
-      "h")
-        help
-        exit 0
-        ;;
-      "f")
-        fresh=true 
-        ;;
-      "o")
-        offline=true
-        ;;
-      "r")
-        remove
-        exit 0
-        ;;
-      "?")
-        failecho "Unknown option $OPTARG"
-        exit 1
-        ;;
-      ":")
-        failecho "No argument value for option $OPTARG"
-        exit 1
-        ;;
-      *)
-        # Should not occur
-        failecho "Unknown error while processing options"
-        exit $?
-        ;;
-    esac
-  done
+while getopts "chr" optname
+do
+  case "$optname" in
+    "c")
+      configure 
+      exit 0
+      ;;
+    "h")
+      help
+      exit 0
+      ;;
+    "r")
+      remove
+      exit 0
+      ;;
+    "?")
+      failecho "Unknown option $OPTARG"
+      exit 1
+      ;;
+    ":")
+      failecho "No argument value for option $OPTARG"
+      exit 1
+      ;;
+    *)
+      # Should not occur
+      failecho "Unknown error while processing options"
+      exit $?
+      ;;
+  esac
+done
 
 main
+
+exit 0

@@ -1,0 +1,43 @@
+#!/bin/sh
+
+date=$(date +'%d. %B %Y')
+latex_folder=~/Work/latex
+rechnungs_folder=~/Work/rechnungen
+rechnungs_template=rechnung.tex
+
+wageperhour="12.00"
+
+echo "Please enter the month: "
+read month
+
+echo "Please enter the year: "
+read year
+
+echo "Please enter the amount of hours worked: "
+read hours
+
+echo "Please enter the city you are in: "
+read city
+
+pushd ./ >/dev/null
+
+cd $latex_folder
+
+rechnungs_file="$year-$month".tex
+cp $rechnungs_template $rechnungs_file
+
+sed -i "s/\[DATE\]/$date/" $rechnungs_file
+sed -i "s/\[HOURS\]/$hours/" $rechnungs_file
+sed -i "s/\[WAGEPERHOUR\]/$wageperhour/" $rechnungs_file
+sed -i "s/\[MONTH\]/$month/" $rechnungs_file
+sed -i "s/\[YEAR\]/$year/" $rechnungs_file
+sed -i "s/\[CITY\]/$city/" $rechnungs_file
+
+pdflatex -output-directory $rechnungs_folder $rechnungs_file >/dev/null
+
+rm $rechnungs_file
+rm $rechnungs_folder/*.{aux,log}
+
+popd >/dev/null
+
+exit 0

@@ -6,7 +6,7 @@ gitfolder=git
 
 githome=$userhome/$gitfolder
 
-folders={$userhome/{Downloads,Documents,Code}} # TODO $userhome testen
+folders={$userhome/{Downloads,Documents,Code,Work}}
 
 dotfolders={$userhome/{.polipo/polipo-cache}}
 
