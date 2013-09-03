@@ -10,7 +10,7 @@ function returnsZero {
 
 function main {
   if returnsOne; then
-    echo "1 is true"
+    echo "1 is false"
   fi
 
   if returnsZero; then

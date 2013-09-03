@@ -1,0 +1,185 @@
+#!/bin/sh
+
+userhome=/home/$(whoami)
+
+gitfolder=git
+
+githome=$userhome/$gitfolder
+
+folders={$userhome/{Downloads,Documents,Code}} # TODO $userhome testen
+
+dotfolders={$userhome/{.polipo/polipo-cache}}
+
+gitfolders={$githome/{aljosha.friemann/profiles,sc/{configs,scripts}}}
+
+gitlabhttp=http://git.xchange.ms
+
+gitlabssh=git@git.xchange.ms
+
+### --------------------------------------------------------- ###
+
+success=0
+
+function create_user () {
+  user=$1
+  groupadd $user 
+  useradd -m -g $user -G audio,video,power,wheel,network,disk,adm -s /bin/zsh $user
+  chfn $user
+}
+
+# method to install packages via pacaur
+function install() {
+  pacaur -S --quiet --noconfirm $@
+}
+
+function set_git_to_ssh {
+  git remote set-url origin $gitlabssh
+}
+
+# method to initiate a git folder & repository
+function init_git() {
+  namespace=$1
+  repo=$2
+  git init
+  git remote add http $gitlabhttp/$namespace/$repo\.git
+  git remote add origin $gitlabssh:$namespace/$repo\.git
+  git branch --set-upstream-to=http/master master
+  git pull
+}
+
+function ready_git_ns() {
+  namespace = $1 
+  for repo in *;
+  do
+    if [ -d $repo ]; then
+      cd $repo
+      init_git $namespace $repo
+    fi
+  done
+}
+
+function ready_git_repos {
+  for namespace in $githome/*;
+  do
+    if [ -d $namespace ]; then
+      cd $githome/$namespace
+      ready_git_ns $namespace
+    fi
+  done
+}
+
+# update pacman mirrors and rank them
+function rank_mirrors {
+  pacman -S reflector
+  mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
+  reflector -l 5 --sort rate --save /etc/pacman.d/mirrorlist
+}
+
+# create necessary folders
+function prepare_folders {
+  mkdir -p $folders $dotfolders $gitfolders
+}
+
+# install all programs and scripts
+function install_progs {
+  utility="ranger atool unzip p7zip unrar anything-sync-daemon truecrypt dos2unix autocutsel zathura{,-pdf-poppler,-ps,-cb,-djvu}"
+  multimedia="vlc deadbeef feh imagemagick"
+  systools="upower tlp tp_smapi memtest86+ alsa-utils dcfldd ntfs-3g "
+  terminal="zsh zsh-syntax-highlighting grml-zsh-config rxvt-unicode urxvt-perls rxvt-unicode-terminfo"
+  xorg="xorg-{server,xinit,setxkbmap,xmodmap,xrandr,xset}"
+  windowmanager="i3"
+  development="sublime-text gvim eclipse"
+  internet="wget openssh openssl openvpn flashplugin icedtea-web-java7 uzbl polipo privoxy mutt pidgin-otr git skype"
+
+  install $utility $termieral $internet $xorg $windowmanager $systools
+  $development $multimedia
+}
+
+# setup programs and their configurations
+function setup_progs {
+  #TODO enable stuff in systemd
+  systemctl enable cronie.service
+
+  # export PATH="/usr/lib/cw:$PATH"
+  #
+  # TODO change asd config so that it syncs ~/.git/profiles/.mozilla in ram
+  # add systemd services (asd, ...)
+  # TODO: ssh
+  #
+  # append memtest stuff to syslinux.cfg
+  echo -e "LABEL memtest\n\tMENU LABEL Memtest86+\n\tLINUX ../memtest86+/memtest.bin\n" >> /boot/syslinux/syslinux.cfg
+
+  # change shell to zsh
+  chsh -s /bin/zsh $USER
+  chsh -s /bin/zsh root
+}
+
+function setup_git {
+  for $namespace in $githome/*;
+  do
+    cd $githome/$namespace
+  
+    for $repo in *;
+    do
+      cd $repo
+      ./install
+    done
+  
+  done
+}
+
+# method to install pacaur from the aur
+function install_pacaur {
+  # TODO aur mit pacman syntax
+  # TODO testen
+  mkdir /tmp/$USER-pacaur-install
+  cd /tmp/$USER-pacaur-install
+
+  wget https://aur.archlinux.org/packages/co/cower/cower.tar.gz
+  wget https://aur.archlinux.org/packages/pa/pacaur/pacaur.tar.gz
+
+  tar -xf cower.tar.gz
+  tar -xf pacaur.tar.gz
+
+  cd cower
+  makepkg -si
+
+  cd ../pacaur
+  makepkg -si
+
+  cd .. && rm -r {cower,pacaur}
+  rm -r /tmp/$USER-pacaur-install
+}
+
+function main {
+  echo "Ranking mirrors for pacman.."
+  rank_mirrors
+
+  echo "Updating system.."
+  pacman -Syu -q --force --noconfirm
+
+  echo "Installing pacaur.."
+  install_pacaur
+
+  echo "Installing and configuring programs.."
+  install_progs && setup_progs
+
+  echo "Please enter your username: " 
+  read user
+  create_user $user
+
+  echo "Switching to user $user"
+  su $user
+
+  echo "Creating folders $folders and $gitfolders"
+  prepare_folders
+
+  echo "Setting up git repositories"
+  ready_git_repos && setup_git
+
+  success=1
+}
+
+while [[ success == 0 ]]; do
+  main
+done

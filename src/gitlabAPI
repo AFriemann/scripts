@@ -1,0 +1,1 @@
+curl --header PRIVATE-TOKEN: QEp2YCE6xhwhf2ywkAep -d name=daemon http://git.schebek.eu/api/v3/projects
