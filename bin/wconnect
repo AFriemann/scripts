@@ -4,9 +4,12 @@
 # @Revision:    0.0
 
 wireless_device=""
-verbosity=""
+verbosity="&>/dev/null"
 dhcp=dhclient
 quiet=false
+
+# Two dots :)
+prefix="••"
 
 # echo colours and format
 function greenecho () { 
@@ -28,7 +31,6 @@ function failecho () {
 function root {
   if [ "$UID" != 0 ]; then 
     me=$(dirname $0)/$(basename $0)
-    successecho "executing $me as root"
     sudo $me
     exit 0
   fi
@@ -37,7 +39,8 @@ function root {
 }
 
 function run () {
-  $@ $verbosity 
+  sh -c "$@ $verbosity"
+  return $?
 }
 
 function detectWirelessDevice {
@@ -76,17 +79,17 @@ function detectWirelessDevice {
 }
 
 function connect {
-  run wpa_supplicant -B -Dwext -c /etc/wpa_supplicant.conf -i $wireless_device
-  run $dhcp $wireless_device
+  run "wpa_supplicant -B -Dwext -c /etc/wpa_supplicant.conf -i $wireless_device"
+  run "$dhcp $wireless_device"
 }
 
 function disconnect {
-  run wpa_cli terminate
-  run $dhcp -x
+  run "wpa_cli terminate"
+  run "$dhcp -x"
 }
 
 function connected {
-  if run ping -c 1 -W 1 www.google.de; then
+  if run "ping -c 1 -W 1 www.google.de"; then
     return 0
   fi
 
@@ -94,17 +97,17 @@ function connected {
 }
 
 function main {
-  if run connected; then
+  if connected; then
     greenecho "already connected, try reconnecting if you really want to."
     exit 0
   fi
 
   root
 
-  run detectWirelessDevice 
+  detectWirelessDevice 
 
   tries=0
-  success=0
+  success=false
 
   greenecho "trying to connect.."
 
@@ -112,14 +115,14 @@ function main {
   do
     connect
     if connected; then
-      success=1
+      success=true
       break 
     fi
     disconnect
     let tries=tries+1
   done
 
-  if [ $success ]; then
+  if $success; then
     successecho "connection established, have fun!"
     return 0
   fi
@@ -135,7 +138,7 @@ function help {
     \t-i specify interface
     \t-q quiet mode
     \t-r force reconnect 
-    \t-v verbosity: 0 - nothing, 1 - stdout, 2 - stdout & stderr
+    \t-v verbosity: [1] - stdout, 2 - stdout & stderr
     \t-x terminate connection\n"
 }
 
@@ -147,7 +150,7 @@ do
       exit 0
       ;;
     "i")
-      interface=$OPTARG
+      wireless_device=$OPTARG
       ;;
     "q")
       quiet=true
@@ -157,9 +160,6 @@ do
       ;;
     "v")
       case "$OPTARG" in
-        0)
-          verbosity=">&/dev/null"
-          ;;
         1)
           verbosity="2>/dev/null"
           ;;
@@ -168,7 +168,7 @@ do
           ;;
         *)
           failecho "only values 0,1 and 2 are allowed. Defaulting to 1 (only stdout)"
-          verbosity="&>/dev/null"
+          verbosity="2>/dev/null"
           ;;
       esac
       ;;
@@ -194,7 +194,7 @@ done
 
 
 if $quiet; then
-  main >/dev/null
+  main &>/dev/null
 else
   main
 fi

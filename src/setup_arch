@@ -16,35 +16,74 @@ gitlabhttp=http://git.xchange.ms
 
 gitlabssh=git@git.xchange.ms
 
+verbosity="&>/dev/null"
+
+### --------------------------------------------------------- ###
+
+# Two dots :)
+prefix="••"
+
+# echo colours and format
+function greenecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;32m $@\033[0m" 
+}
+
+function redecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m" 
+}
+
+function successecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;38m $@\033[0m" 
+}
+
+function failecho () { 
+  echo -e "\033[1;34m${prefix}\033[0m\033[1;31m $@\033[0m" 
+}
+
+function root {
+  if [ "$UID" != 0 ]; then 
+    me=$(dirname $0)/$(basename $0)
+    sudo $me
+    exit 0
+  fi
+
+  return 0
+}
+
+function run () {
+  sh -c "$@ $verbosity"
+  return $?
+}
+
 ### --------------------------------------------------------- ###
 
 success=0
 
 function create_user () {
   user=$1
-  groupadd $user 
-  useradd -m -g $user -G audio,video,power,wheel,network,disk,adm -s /bin/zsh $user
-  chfn $user
+  run "groupadd $user"
+  run "useradd -m -g $user -G audio,video,power,wheel,network,disk,adm -s /bin/zsh $user"
+  run "chfn $user"
 }
 
 # method to install packages via pacaur
 function install() {
-  pacaur -S --quiet --noconfirm $@
+  run "pacaur -S --quiet --noconfirm $@"
 }
 
 function set_git_to_ssh {
-  git remote set-url origin $gitlabssh
+  run "git remote set-url origin $gitlabssh"
 }
 
 # method to initiate a git folder & repository
 function init_git() {
   namespace=$1
   repo=$2
-  git init
-  git remote add http $gitlabhttp/$namespace/$repo\.git
-  git remote add origin $gitlabssh:$namespace/$repo\.git
-  git branch --set-upstream-to=http/master master
-  git pull
+  run "git init"
+  run "git remote add http $gitlabhttp/$namespace/$repo\.git"
+  run "git remote add origin $gitlabssh:$namespace/$repo\.git"
+  run "git branch --set-upstream-to=http/master master"
+  run "git pull"
 }
 
 function ready_git_ns() {
@@ -70,9 +109,9 @@ function ready_git_repos {
 
 # update pacman mirrors and rank them
 function rank_mirrors {
-  pacman -S reflector
-  mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
-  reflector -l 5 --sort rate --save /etc/pacman.d/mirrorlist
+  run "pacman -S reflector"
+  run "mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup"
+  run "reflector -l 5 --sort rate --save /etc/pacman.d/mirrorlist"
 }
 
 # create necessary folders
@@ -98,7 +137,7 @@ function install_progs {
 # setup programs and their configurations
 function setup_progs {
   #TODO enable stuff in systemd
-  systemctl enable cronie.service
+  run "systemctl enable cronie.service"
 
   # export PATH="/usr/lib/cw:$PATH"
   #
@@ -110,8 +149,8 @@ function setup_progs {
   echo -e "LABEL memtest\n\tMENU LABEL Memtest86+\n\tLINUX ../memtest86+/memtest.bin\n" >> /boot/syslinux/syslinux.cfg
 
   # change shell to zsh
-  chsh -s /bin/zsh $USER
-  chsh -s /bin/zsh root
+  run "chsh -s /bin/zsh $USER"
+  run "chsh -s /bin/zsh root"
 }
 
 function setup_git {
@@ -132,53 +171,101 @@ function setup_git {
 function install_pacaur {
   # TODO aur mit pacman syntax
   # TODO testen
-  mkdir /tmp/$USER-pacaur-install
-  cd /tmp/$USER-pacaur-install
+  run "mkdir /tmp/$USER-pacaur-install"
+  run "cd /tmp/$USER-pacaur-install"
 
-  wget https://aur.archlinux.org/packages/co/cower/cower.tar.gz
-  wget https://aur.archlinux.org/packages/pa/pacaur/pacaur.tar.gz
+  run "wget https://aur.archlinux.org/packages/co/cower/cower.tar.gz"
+  run "wget https://aur.archlinux.org/packages/pa/pacaur/pacaur.tar.gz"
 
-  tar -xf cower.tar.gz
-  tar -xf pacaur.tar.gz
+  run "tar -xf cower.tar.gz"
+  run "tar -xf pacaur.tar.gz"
 
   cd cower
-  makepkg -si
+  run "makepkg -si"
 
   cd ../pacaur
-  makepkg -si
+  run "makepkg -si"
 
-  cd .. && rm -r {cower,pacaur}
-  rm -r /tmp/$USER-pacaur-install
+  cd .. 
+  run "rm -r {cower,pacaur}"
+  run "rm -r /tmp/$USER-pacaur-install"
 }
 
 function main {
-  echo "Ranking mirrors for pacman.."
+  root
+
+  greenecho "Ranking mirrors for pacman.."
   rank_mirrors
 
-  echo "Updating system.."
-  pacman -Syu -q --force --noconfirm
+  greenecho "Updating system.."
+  run "pacman -Syu -q --force --noconfirm"
 
-  echo "Installing pacaur.."
+  greenecho "Installing pacaur.."
   install_pacaur
 
-  echo "Installing and configuring programs.."
+  greenecho "Installing and configuring programs.."
   install_progs && setup_progs
 
-  echo "Please enter your username: " 
+  greenecho "Please enter your username: " 
   read user
   create_user $user
 
-  echo "Switching to user $user"
-  su $user
+  greenecho "Switching to user $user"
+  run "su $user"
 
-  echo "Creating folders $folders and $gitfolders"
+  greenecho "Creating folders $folders and $gitfolders"
   prepare_folders
 
-  echo "Setting up git repositories"
+  greenecho "Setting up git repositories"
   ready_git_repos && setup_git
 
   success=1
 }
+
+function help {
+  echo -e "usage: wconnect [COMMANDS]\n
+    possible commands are:\n 
+    \t-h this help message
+    \t-v verbosity: [1] - stdout, 2 - stdout & stderr\n"
+}
+
+while getopts "hv:" optname
+do
+  case "$optname" in
+    "h")
+      help
+      exit 0
+      ;;
+    "v")
+      case "$OPTARG" in
+        1)
+          verbosity="2>/dev/null"
+          ;;
+        2)
+          verbosity=""
+          ;;
+        *)
+          failecho "only values 0,1 and 2 are allowed. Defaulting to 1 (only stdout)"
+          verbosity="2>/dev/null"
+          ;;
+      esac
+      ;;
+    "?")
+      failecho "Unknown option $OPTARG"
+      exit 1
+      ;;
+    ":")
+      failecho "No argument value for option $OPTARG"
+      exit 1
+      ;;
+    *)
+      # Should not occur
+      failecho "Unknown error while processing options"
+      exit $?
+      ;;
+  esac
+done
+
 
 while [[ success == 0 ]]; do
   main

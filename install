@@ -5,6 +5,8 @@ systemdFolder="/usr/lib/systemd"
 bindir="/usr/bin"
 wirelessDevice=""
 
+verbosity="&>/dev/null"
+
 fresh=false
 offline=false
 
@@ -31,72 +33,71 @@ function failecho () {
 function root {
   if [ "$UID" != 0 ]; then 
     me=$(dirname $0)/$(basename $0)
-    successecho "executing $me as root"
-    $me
+    sudo $me
     exit 0
   fi
 
   return 0
 }
 
+function run () {
+  sh -c "$@ $verbosity"
+  return $?
+}
+
 function remove {
-  removeSystemd
-  removeBinaries
+  remove_systemd
+  remove_binaries
 }
 
 function remove_binaries {
-  cd src
-
   for file in bin/*; do
-    if [ -f $file ]; then
-      rm $bindir/$file
+    if [ -f bin/$file ]; then
+      run "rm $bindir/$file"
     fi
   done
-
-  cd ..
 }
 
 function install_binaries {
-  cd bin 
-
-  for file in *; do
-    if [ -f $file ]; then
-      cp $file $bindir/$file
-      chmod 755 $bindir/$file
+  for file in bin/*; do
+    if [ -f bin/$file ]; then
+      run "cp bin/$file $bindir/$file"
+      run "chmod 755 $bindir/$file"
     fi
   done
-
-  cd ..
 }
 
 function remove_systemd {
-  stopSystemd
-  disableSystemd
+  stop_systemd
+  disable_systemd
  
-  rm $systemdFolder/system/wconnect*.service
-  rm $systemdFolder/system/dhclient*.service
-  rm $systemdFolder/scripts/reconnect.sh
-  rm $systemdFolder/scripts/wc-reconnect
+  run "rm $systemdFolder/system/wconnect*.service"
+  run "rm $systemdFolder/system/dhclient*.service"
+  run "rm $systemdFolder/scripts/reconnect.sh"
+  run "rm $systemdFolder/scripts/wc-reconnect"
   
-  rm $systemdFolder/system/i3lock*.service
+  run "rm $systemdFolder/system/i3lock*.service"
 
-  systemctl --system daemon-reload
+  run "systemctl --system daemon-reload"
 }
 
 function install_systemd {
   stopSystemd
   disableSystemd
 
-  cd src
-  cp systemd/system/wconnect@.service $systemdFolder/system/
-  cp systemd/system/wpa_supplicant@.service $systemdFolder/system/
-  cp systemd/system/dhclient@.service $systemdFolder/system/
-  cp systemd/scripts/wc-reconnect $systemdFolder/scripts/
-  
-  cp $srcdir/systemd/system/i3lock@.service $systemdFolder/system/
-  cd ..
+  run "pushd ./"
 
-  systemctl --system daemon-reload
+  cd src
+  #run "cp systemd/system/wconnect@.service $systemdFolder/system/"
+  #run "cp systemd/system/wpa_supplicant@.service $systemdFolder/system/"
+  #run "cp systemd/system/dhclient@.service $systemdFolder/system/"
+  #run "cp systemd/scripts/wc-reconnect $systemdFolder/scripts/"
+  #
+  #run "cp $srcdir/systemd/system/i3lock@.service $systemdFolder/system/"
+
+  run "popd"
+
+  run "systemctl --system daemon-reload"
 }
 
 function start_systemd {
@@ -134,7 +135,7 @@ function disable_systemd {
 }
 
 function online {
-  if ping -c 1 -W 1 www.google.de >/dev/null; then
+  if run "ping -c 1 -W 1 www.google.de" &>/dev/null; then
     return 0
   fi
   
@@ -145,7 +146,7 @@ function main {
   root
   
   if online; then
-    if git pull; then
+    if run "git pull"; then
       successecho "Git repository successfully updated"
     fi
   fi
@@ -189,13 +190,9 @@ function help {
     \t-r removes all installed scripts and services\n"
 }
 
-while getopts "chr" optname
+while getopts "hr" optname
 do
   case "$optname" in
-    "c")
-      configure 
-      exit 0
-      ;;
     "h")
       help
       exit 0
