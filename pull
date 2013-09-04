@@ -1,0 +1,17 @@
+#!/bin/sh
+
+user=$(whoami)
+current_branch=$(git branch | sed -n '/\* /s///p')
+
+git fetch origin
+
+if [ $current_branch != $user ]; then
+  git pull
+  git branch --set-upstream-to=origin/$user $user
+  git checkout $user
+else
+  git pull
+fi
+
+
+exit 0
