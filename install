@@ -45,6 +45,12 @@ function run () {
   return $?
 }
 
+function link_snippets {
+  if [ -f snippets ]; then
+    ln -s $(pwd)/snippets ~/Code/snippets 
+  fi
+}
+
 function remove {
   remove_systemd
   remove_binaries
@@ -150,6 +156,8 @@ function main {
       successecho "Git repository successfully updated"
     fi
   fi
+
+  link_snippets
 
   remove
   

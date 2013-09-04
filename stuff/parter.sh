@@ -9,6 +9,8 @@ counter=0
 start=$3
 amount=$4
 
+# TODO wtf is this shit?
+
 if [ $start -gt $0 ]; then
   for f in $source/*; do
     if [ $counter -ge $start ]; then

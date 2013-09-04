@@ -123,7 +123,7 @@ function prepare_folders {
 function install_progs {
   utility="ranger atool unzip p7zip unrar anything-sync-daemon truecrypt dos2unix autocutsel zathura{,-pdf-poppler,-ps,-cb,-djvu}"
   multimedia="vlc deadbeef feh imagemagick"
-  systools="upower tlp tp_smapi memtest86+ alsa-utils dcfldd ntfs-3g "
+  systools="upower tlp tp_smapi memtest86+ alsa-utils dcfldd ntfs-3g gnupg"
   terminal="zsh zsh-syntax-highlighting grml-zsh-config rxvt-unicode urxvt-perls rxvt-unicode-terminfo"
   xorg="xorg-{server,xinit,setxkbmap,xmodmap,xrandr,xset}"
   windowmanager="i3"

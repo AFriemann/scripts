@@ -3,6 +3,7 @@
 # @Last Change: 24-Dez-2004.
 # @Revision:    0.0
 
+checkhost=www.google.de
 wireless_device=""
 verbosity="&>/dev/null"
 dhcp="dhclient -v"
@@ -82,6 +83,10 @@ function detectWirelessDevice {
   return 0
 }
 
+function ssid {
+  return 
+}
+
 function connect {
   greenecho "starting wpa_supplicant.."
   run "wpa_supplicant -B -Dwext -c /etc/wpa_supplicant.conf -i $wireless_device"
@@ -104,17 +109,21 @@ function disconnect {
 }
 
 function connected {
-  if run "ping -c 1 -W 1 www.google.de"; then
+  greenecho "pinging $checkhost"
+  if run "ping -c 1 -W 1 $checkhost"; then
     return 0
   fi
 
+  failecho "not connected"
   return 1
 }
 
 function main () {
-  if connected; then
-    greenecho "already connected, try reconnecting if you really want to."
-    exit 0
+  if [ $UID -ne 0 ]; then
+    if connected; then
+      greenecho "already connected, try reconnecting if you really want to."
+      exit 0
+    fi
   fi
 
   root $@
@@ -126,7 +135,7 @@ function main () {
   tries=1
   success=false
 
-  greenecho "trying to connect $wireless_device.."
+  greenecho "trying to connect.."
 
   while [[ tries -lt 4 ]];
   do
@@ -141,7 +150,8 @@ function main () {
   done
 
   if $success; then
-    successecho "connection established, have fun!"
+    ssid=$(wpa_cli status | grep -e "ssid" | grep -v bssid | cut -d'=' -f2)
+    successecho "connection established with $ssid, have fun!"
     return 0
   fi
 
