@@ -1,0 +1,11 @@
+[Unit]
+Description=Disables the screensaver in X
+After=graphical.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/xset s off -d :0
+
+[Install]
+WantedBy=graphical.target

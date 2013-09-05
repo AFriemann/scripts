@@ -110,7 +110,7 @@ function disconnect {
 
 function connected {
   greenecho "pinging $checkhost"
-  if run "ping -c 1 -W 1 $checkhost"; then
+  if run "ping -q -c 1 -w 1 $checkhost"; then
     return 0
   fi
 

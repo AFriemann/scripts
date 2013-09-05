@@ -59,10 +59,36 @@ function run () {
 
 success=0
 
+function detect_video {
+  VGA=$(lspci | grep VGA)
+
+  if cat $VGA | grep -i intel; then
+    return 0
+  elif cat $VGA | grep -i ati; then
+    return 1
+  elif cat $VGA | grep -i nvidia; then
+    return 2
+  else
+    return -1
+  fi
+}
+
 function create_user () {
   user=$1
+  
+  greenecho "should this user be in the wheel group? [y]/n"
+  read wheel
+  if [ "$wheel" == "n" ]; then
+    wheel=""
+  else
+    wheel="wheel"
+  fi
+
+  user_groups="audio camera disk games lp network optical rfkill scanner storage video $wheel"
+  system_groups="systemd-journal"
+
   run "groupadd $user"
-  run "useradd -m -g $user -G audio,video,power,wheel,network,disk,adm -s /bin/zsh $user"
+  run "useradd -m -g $user -G $user_groups $system_groups -s /bin/zsh $user"
   run "chfn $user"
 }
 
@@ -121,17 +147,45 @@ function prepare_folders {
 
 # install all programs and scripts
 function install_progs {
-  utility="ranger atool unzip p7zip unrar anything-sync-daemon truecrypt dos2unix autocutsel zathura{,-pdf-poppler,-ps,-cb,-djvu}"
+  utility="ranger atool unzip p7zip unrar anything-sync-daemon truecrypt dos2unix autocutsel zathura{,-pdf-poppler,-ps,-cb,-djvu} mlocate"
   multimedia="vlc deadbeef feh imagemagick"
-  systools="upower tlp tp_smapi memtest86+ alsa-utils dcfldd ntfs-3g gnupg"
+  systools="upower tlp tp_smapi memtest86+ alsa-utils dcfldd ntfs-3g gnupg expac pacmatic"
   terminal="zsh zsh-syntax-highlighting grml-zsh-config rxvt-unicode urxvt-perls rxvt-unicode-terminfo"
   xorg="xorg-{server,xinit,setxkbmap,xmodmap,xrandr,xset}"
   windowmanager="i3"
   development="sublime-text gvim eclipse"
   internet="wget openssh openssl openvpn flashplugin icedtea-web-java7 uzbl polipo privoxy mutt pidgin-otr git skype"
 
+  detect_video
+  case "$?" in
+    0)
+      graphics=xf86-video-intel
+      ;;
+    1)
+      greenecho "detected ati graphics card; would you like the open source driver? [y]/n"
+      read os
+      if [ $os == "n" ]; then
+        graphics=catalyst-dkms
+      else
+        graphics=xf86-video-ati
+      fi
+      ;;
+    2)
+      greenecho "detected nvidia graphics card; would you like the open source driver? [y]/n"
+      read os
+      if [ $os == "n" ]; then
+        graphics=nvidia
+      else
+        graphics=xf86-video-nouveau
+      fi
+      ;;
+    *)
+      failecho "could not detect graphics card, please install it manually"
+      ;;
+  esac
+
   install $utility $termieral $internet $xorg $windowmanager $systools
-  $development $multimedia
+  $development $multimedia $graphics
 }
 
 # setup programs and their configurations
@@ -151,6 +205,8 @@ function setup_progs {
   # change shell to zsh
   run "chsh -s /bin/zsh $USER"
   run "chsh -s /bin/zsh root"
+
+  updatedb
 }
 
 function setup_git {

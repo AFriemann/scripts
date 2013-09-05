@@ -79,10 +79,11 @@ function remove_systemd {
  
   run "rm $systemdFolder/system/wconnect*.service"
   run "rm $systemdFolder/system/dhclient*.service"
+  run "rm $systemdFolder/system/urxvt*.service"
+  run "rm $systemdFolder/system/i3lock*.service"
+  run "rm $systemdFolder/system/screensaveroff.service"
   run "rm $systemdFolder/scripts/reconnect.sh"
   run "rm $systemdFolder/scripts/wc-reconnect"
-  
-  run "rm $systemdFolder/system/i3lock*.service"
 
   run "systemctl --system daemon-reload"
 }
@@ -93,13 +94,11 @@ function install_systemd {
 
   run "pushd ./"
 
-  cd src
-  #run "cp systemd/system/wconnect@.service $systemdFolder/system/"
-  #run "cp systemd/system/wpa_supplicant@.service $systemdFolder/system/"
-  #run "cp systemd/system/dhclient@.service $systemdFolder/system/"
-  #run "cp systemd/scripts/wc-reconnect $systemdFolder/scripts/"
-  #
-  #run "cp $srcdir/systemd/system/i3lock@.service $systemdFolder/system/"
+  cd systemd
+  run "cp system/wconnect.service $systemdFolder/system/"
+  run "cp system/urxvtd@.service $systemdFolder/scripts/"
+  run "cp system/i3lock@.service $systemdFolder/system/"
+  run "cp system/screensaveroff.service $systemdFolder/system/"
 
   run "popd"
 
@@ -107,36 +106,29 @@ function install_systemd {
 }
 
 function start_systemd {
-  #systemctl start wconnect@"$wirelessDevice".service
-  #systemctl start wpa_supplicant@"$wirelessDevice".service
-  #systemctl start dhclient@"$wirelessDevice".service
+  systemctl start wconnect.service
+  systemctl start urxvtd@"$USER".service
   return 0
 }
 
 function stop_systemd {
-  #systemctl stop i3lock@"$USER".service &>/dev/null
-
-  #systemctl stop wconnect* &>/dev/null
-  #systemctl stop dhclient* &>/dev/null
-  #systemctl stop wpa_supplicant* &>/dev/null
+  run "systemctl stop wconnect*"
+  run "systemctl stop urxvt*"
+  run "systemctl stop stopscreensaveroff.service"
   return 0
 }
 
 function enable_systemd {
-  #systemctl enable i3lock@"$USER".service
-
-  #systemctl enable wpa_supplicant@"$wirelessDevice".service
-  #systemctl enable dhclient@"$wirelessDevice".service
-  #systemctl enable wconnect@"$wirelessDevice".service
+  run "systemctl enable i3lock@"$USER".service"
+  run "systemctl enable urxvtd@"$USER".service"
+  run "systemctl enable wconnect.service"
   return 0
 }
 
 function disable_systemd {
-  #systemctl disable wconnect*
-  #systemctl disable wpa_supplicant*  
-  #systemctl disable dhclient*
-
-  #systemctl disable i3lock@"$USER".service
+  run "systemctl disable i3lock@"$USER".service"
+  run "systemctl disable urxvtd@"$USER".service"
+  run "systemctl disable wconnect.service"
   return 0
 }
 

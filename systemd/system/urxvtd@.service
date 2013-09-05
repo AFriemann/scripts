@@ -1,0 +1,11 @@
+[Unit]
+Description=RXVT-Unicode Daemon
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=%i
+ExecStart=/usr/bin/urxvtd -f -o
+
+[Install]
+WantedBy=graphical.target
