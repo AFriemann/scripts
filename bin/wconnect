@@ -138,7 +138,7 @@ function disconnect {
 }
 
 function connected {
-  run "timeout -s KILL --preserve-status 1s ping -c1 -W1 $checkhost" 1
+  run "timeout -s KILL 1s ping -c1 -W1 $checkhost &>/dev/null" 1
   return $?
 }
 
