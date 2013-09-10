@@ -4,10 +4,14 @@
 # @Revision:    0.0
 
 checkhost=www.google.de
+
+ssid=""
 wireless_device=""
+
 verbosity="&>/dev/null"
-dhcp="dhclient -v"
 quiet=false
+
+dhcp="dhclient"
 
 # Two dots :)
 prefix="••"
@@ -44,20 +48,23 @@ function root () {
 }
 
 function run () {
-  sh -c "$@ $verbosity"
+  sudo=""
+  if ! [ $2 ]; then
+    sudo="sudo"
+  fi
+
+  sh -c "$sudo $1 $verbosity"
   return $?
 }
 
-function detectWirelessDevice {
-  greenecho "attempting to detect wireless interface.."
- 
+function detect_wireless_device {
   saveIFS=$IFS
 
   IFS=$'\n' read wifi0 wifi1 wifi2 <<< "$(ip link | grep -o "w[a-z 0-9]*[0-9]")"
 
   if [ -z $wifi0 ]
   then
-    redecho "can't detect wireless interface, please enter device name: "
+    redecho "can't auto detect wireless interface, please enter device name: "
     read wireless_device
     return 0
   fi
@@ -78,65 +85,92 @@ function detectWirelessDevice {
 
   IFS=$saveIFS
   
-  successecho "set wireless device name to $wireless_device"
-
   return 0
 }
 
-function ssid {
-  return 
+function detect_ssid {
+  ssid=$(wpa_cli status | grep -e "ssid" | grep -v bssid | cut -d'=' -f2)
+  return 0
+}
+
+function connect_wpa_supplicant {
+  greenecho "starting wpa_supplicant.."
+  run "wpa_supplicant -B -Dwext -c /etc/wpa_supplicant.conf -i $wireless_device"
+  ret=$?
+  if [ $ret -ne 0 -a $ret -ne 255 ]; then
+    failecho "failed to start wpa_supplicant!"
+  fi
+  return $ret
+}
+
+function connect_dhcp {
+  greenecho "trying to get dhcp lease.."
+  run "$dhcp -v $wireless_device"
+  ret=$?
+  if [ $ret -ne 0 ]; then
+    failecho "failed to start $dhcp"
+  fi
+  return $ret
 }
 
 function connect {
-  greenecho "starting wpa_supplicant.."
-  run "wpa_supplicant -B -Dwext -c /etc/wpa_supplicant.conf -i $wireless_device"
-  if [ $? -ne 0 -a $? -ne 255 ]; then
-    failecho "failed to start wpa_supplicant!"
-  fi
+  connect_wpa_supplicant
+  connect_dhcp
+}
 
-  greenecho "starting dhclient.."
-  if ! run "$dhcp $wireless_device"; then
-    failecho "failed to start $dhcp!"
-  fi
+function disconnect_dhcp {
+  greenecho "terminating $dhcp.."
+  run "killall $dhcp"
+  return $?
+}
+
+function disconnect_wpa_supplicant {
+  greenecho "terminating wpa_supplicant.."
+  #run "wpa_cli terminate"
+  #ret=$?
+  run "killall wpa_supplicant"
+  return $?
 }
 
 function disconnect {
-  greenecho "terminating wpa_supplicant.."
-  run "wpa_cli terminate"
-
-  greenecho "terminating dhclient.."
-  run "$dhcp -x"
+  disconnect_wpa_supplicant  
+  disconnect_dhcp
 }
 
 function connected {
-  greenecho "pinging $checkhost"
-  if run "ping -q -c 1 -w 1 $checkhost"; then
-    return 0
-  fi
+  run "timeout -s KILL --preserve-status 1s ping -c1 -W1 $checkhost" 1
+  return $?
+}
 
-  failecho "not connected"
-  return 1
+function wpa_supplicant_up {
+  run "pidof wpa_supplicant" 1
+  return $?
+}
+
+function dhcp_up {
+  run "pidof $dhcp" 1
+  return $?
 }
 
 function main () {
-  if [ $UID -ne 0 ]; then
-    if connected; then
-      greenecho "already connected, try reconnecting if you really want to."
-      exit 0
-    fi
+  greenecho "pinging $checkhost"
+  if connected; then
+    greenecho "already connected, try reconnecting if you really want to."
+    exit 0
+  else
+    failecho "not connected!"
   fi
 
-  root $@
-
+  greenecho "attempting to detect wireless interface.."
   if [ ! $wireless_device ]; then
-    detectWirelessDevice 
+    detect_wireless_device 
   fi
+  successecho "set wireless device name to $wireless_device"
 
   tries=1
   success=false
 
   greenecho "trying to connect.."
-
   while [[ tries -lt 4 ]];
   do
     delimiter " $tries".
@@ -150,7 +184,6 @@ function main () {
   done
 
   if $success; then
-    ssid=$(wpa_cli status | grep -e "ssid" | grep -v bssid | cut -d'=' -f2)
     successecho "connection established with $ssid, have fun!"
     return 0
   fi
