@@ -1,0 +1,10 @@
+[Unit]
+Description=Polipo Web Caching Proxy
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/polipo -c /home/%i/.polipo/poliporc
+
+[Install]
+WantedBy=multi-user.target privoxy.service
