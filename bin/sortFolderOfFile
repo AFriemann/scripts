@@ -1,0 +1,67 @@
+#!/bin/bash
+# sortFiles.sh -- created 2013-09-24, Aljosha Friemann
+# @Last Change: 24-Dez-2004.
+# @Revision:    0.0
+
+base=$(dirname $@)
+
+if [[ -z $base ]]; then
+  $base="~/Downloads/"
+fi
+
+folder_uni="$base/uni/"
+folder_pdf="$base/pdf/"
+folder_torrent="$base/torrent/.tfiles/"
+folder_img="$base/pictures/unsorted/"
+folder_archives="$base/archives/"
+folder_video="$base/videos/"
+folder_music="$base/music/"
+folder_other="$base/other/"
+
+move () {
+  echo "moving $1 to $2"
+  mv -f $1 $2
+}
+
+mkdir $folder_uni &>/dev/null
+mkdir $folder_pdf &>/dev/null
+mkdir $folder_torrent &>/dev/null
+mkdir $folder_img &>/dev/null
+mkdir $folder_archives &>/dev/null
+mkdir $folder_music &>/dev/null
+mkdir $folder_video &>/dev/null
+mkdir $folder_other &>/dev/null
+
+for file in $base/*;
+do
+  if [[ -f $file ]]; then
+
+    if [[ $file =~ "UNI" ]]; then
+      move $file $folder_uni
+
+    elif [[ $file =~ ".pdf" ]]; then
+      move $file $folder_pdf 
+
+    elif [[ $file =~ ".torrent" ]]; then
+      move $file $folder_torrent
+
+    elif [[ $file =~ ".zip" || $file =~ ".rar" || $file =~ ".tar" ]]; then
+      move $file $folder_archives
+
+    elif [[ $file =~ ".png" || $file =~ ".jpg" || $file =~ ".gif" ]]; then
+      move $file $folder_img
+
+    elif [[ $file =~ ".flac" || $file =~ ".mp3" ]]; then
+      move $file $folder_music
+
+    elif [[ $file =~ ".mov" || $file =~ ".flv" || $file =~ ".mpg" || $file =~ ".mpeg" || $file =~ ".mkv" ]]; then
+      move $file $folder_video
+
+    else
+      move $file $folder_other
+
+    fi
+  fi
+done
+
+# vi: 
