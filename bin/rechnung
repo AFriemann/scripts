@@ -1,5 +1,22 @@
 #!/bin/sh
 
+month () {
+  case $@ in
+    Januar) echo "1" ;;
+    Februar) echo "2" ;;
+    März) echo "3" ;;
+    April) echo "4" ;;
+    Mai) echo "5" ;;
+    Juni) echo "6" ;;
+    Juli) echo "7" ;;
+    August) echo "8" ;;
+    September) echo "9" ;;
+    Oktober) echo "10" ;;
+    November) echo "11" ;;
+    Dezember) echo "12" ;;
+  esac
+}
+
 date=$(date +'%d. %B %Y')
 latex_folder=~/Work/latex
 rechnungs_folder=~/Work/rechnungen
@@ -23,7 +40,13 @@ pushd ./ >/dev/null
 
 cd $latex_folder
 
-rechnungs_file="$year-$month".tex
+d_month=$(month "$month")
+if [[ -z $d_month ]]; then
+  rechnungs_file="$year-$month.tex"
+else
+  rechnungs_file="$year-$d_month.tex"
+fi
+
 cp $rechnungs_template $rechnungs_file
 
 sed -i "s/\[DATE\]/$date/" $rechnungs_file
