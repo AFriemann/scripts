@@ -3,7 +3,7 @@
 # @Last Change: 24-Dez-2004.
 # @Revision:    0.0
 
-base=$(dirname $@)
+#base=$(dirname $@)
 
 if [[ -z $base ]]; then
   $base="~/Downloads/"
@@ -50,6 +50,9 @@ do
 
     elif [[ $file =~ ".png" || $file =~ ".jpg" || $file =~ ".gif" ]]; then
       move $file $folder_img
+      pushd $folder_img
+      sortImages
+      popd
 
     elif [[ $file =~ ".flac" || $file =~ ".mp3" ]]; then
       move $file $folder_music

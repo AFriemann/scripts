@@ -130,6 +130,7 @@ connect_dhcp () {
 connect () {
   connect_wpa_supplicant
   connect_dhcp
+  return $?
 }
 
 disconnect_dhcp () {
@@ -179,11 +180,9 @@ main () {
   while [[ tries -lt 4 ]];
   do
     delimiter " $tries".
-    connect
-    greenecho "pinging $checkhost"
-    if connected; then
+    if connect; then
       success=true
-      break 
+      break
     fi
     failecho "not connected!"
     disconnect

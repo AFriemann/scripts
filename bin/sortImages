@@ -1,0 +1,38 @@
+#!/bin/bash
+# sortImages -- created 2013-10-06, Aljosha Friemann
+# @Last Change: 24-Dez-2004.
+# @Revision:    0.0
+
+img_dir_name="/home/$USER/Downloads/pictures"
+folder=$@
+
+if [[ -z $folder ]]; then
+  folder=$img_dir_name
+fi
+
+loadable () {
+  feh -Uq $@ &>/dev/null
+  return $?
+}
+
+home="~"
+
+mkdir -p $img_dir_name/wallpapers/{1680x1050,1920x1080}
+
+for image in $folder/*;
+do
+  if [ -f $image ] && loadable $image; then
+    resolution=$(feh -qL "%wx%h" $image 2>/dev/null)
+    echo $image "is loadable, size is " $resolution
+
+    if [[ $resolution == "1920x1080" ]]; then
+      echo "moving $image to folder wallpapers/1680x1050/$(basename $image)"
+      mv "$image" "$img_dir_name/wallpapers/1680x1050/$(basename $image)"
+    elif [[ $resolution == "1680x1050" ]]; then
+      echo "moving $image to wallpapers/1920x1080/$(basename $image)"
+      mv "$image" "$img_dir_name/wallpapers/1920x1080/$(basename $image)"
+    fi
+  fi
+done
+
+# vi: 
