@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if [[ -z $1 ]]; then
+  echo "must at least provide an input file!"
+  exit 1
+else
+  if=$(basename $1)
+  if_dir=$(dirname $1)
+fi
+
+if [[ -z $2 ]]; then
+  of="${if%.*}.html" #$if with changed filetype to html
+  of_dir=$if_dir
+else
+  of=$(basename $2)
+  of_dir=$(dirname $2)
+fi
+
+cat "$if_dir/$if" | markdown --html4tags > "$of_dir/$of"

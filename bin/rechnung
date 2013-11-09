@@ -18,9 +18,11 @@ month () {
 }
 
 date=$(date +'%d. %B %Y')
-latex_folder=~/Work/latex
-rechnungs_folder=~/Work/rechnungen
-rechnungs_template=rechnung.tex
+#latex_folder=~/Work/latex
+latex_folder="/media/5bc93470-5e29-42e5-97fb-5ec3832befd2/aljosha/Work/latex"
+#rechnungs_folder=~/Work/rechnungen
+rechnungs_folder="/media/5bc93470-5e29-42e5-97fb-5ec3832befd2/aljosha/Work/rechnungen"
+rechnungs_template="rechnung.tex"
 
 wageperhour="12.00"
 
@@ -36,12 +38,13 @@ read hours
 echo "Please enter the city you are in: "
 read city
 
-pushd ./ >/dev/null
+#pushd ./ >/dev/null
+cur_folder=$(pwd)
 
 cd $latex_folder
 
 d_month=$(month "$month")
-if [[ -z $d_month ]]; then
+if [ -z $d_month ]; then
   rechnungs_file="$year-$month.tex"
 else
   rechnungs_file="$year-$d_month.tex"
@@ -56,11 +59,12 @@ sed -i "s/\[MONTH\]/$month/" $rechnungs_file
 sed -i "s/\[YEAR\]/$year/" $rechnungs_file
 sed -i "s/\[CITY\]/$city/" $rechnungs_file
 
-pdflatex -output-directory $rechnungs_folder $rechnungs_file >/dev/null
+pdflatex -output-directory $rechnungs_folder $rechnungs_file
 
 rm $rechnungs_file
 rm $rechnungs_folder/*.{aux,log}
 
-popd >/dev/null
+#popd >/dev/null
+cd $cur_folder
 
 exit 0
