@@ -1,7 +1,8 @@
 scripts
 =======
 
-A collection of more or less useful scripts
+A collection of more or less useful scripts. 
+Beerware all the way!
 
 #### md2html
 
