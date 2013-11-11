@@ -1,4 +1,4 @@
 scripts
 =======
 
-A collection of useful scripts
+A collection of more or less useful scripts
