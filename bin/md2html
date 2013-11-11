@@ -27,7 +27,7 @@ class Md2Html(Action):
 parser = ArgumentParser(
     prog='md2html', 
     description='Create html files from markdown text files', 
-    usage='%(prog)s [options]')
+    usage='%(prog)s [options] file [out]')
 
 parser.add_argument(
     '-p', '--preview', 
