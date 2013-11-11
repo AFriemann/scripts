@@ -6,9 +6,6 @@ from subprocess import Popen, PIPE
 import webbrowser
 
 class Md2Html(argparse.Action):
-    def conv_f_name(self, in_file):
-        return 
-
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest, values)
         in_file = open(namespace.in_file[0], 'r')
@@ -43,11 +40,6 @@ parser.add_argument(
     nargs='+',
     action=Md2Html,
     help='markdown file')
-
-parser.add_argument(
-    'out_file',
-    nargs='?',
-    help='output filename')
 
 args = parser.parse_args()
 
