@@ -5,9 +5,16 @@ from os import remove
 from subprocess import Popen,PIPE
 import webbrowser
 
+class Logger(Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, vales)
+
+
 class Md2Html(Action):
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest, values)
+        print(namespace, self.dest, values)
+
         in_file = open(namespace.in_file[0], 'r')
 
         html, err = Popen('markdown', stdin=PIPE, stdout=PIPE).communicate(in_file.read())
@@ -33,6 +40,11 @@ parser.add_argument(
     '-p', '--preview', 
     action='store_true',
     help='preview file in browser')
+
+parser.add_argument(
+    '-l',
+    action=Logger,
+    help='foo')
 
 parser.add_argument(
     'in_file', 

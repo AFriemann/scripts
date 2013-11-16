@@ -1,0 +1,55 @@
+#!/bin/bash
+
+INPUT=$@
+
+C_FOLDER=$(pwd)
+PACKAGES_FOLDER="$HOME/.packages"
+TAR_FOLDER="$PACKAGES_FOLDER/tarfiles"
+
+SB_URL="http://slackbuilds.org/slackbuilds/14.0"
+PKG_URL=$SB_URL/$INPUT
+
+mkdir $PACKAGES_FOLDER 2>/dev/null 
+cd $PACKAGES_FOLDER
+
+(wget -N $PKG_URL) || exit 1
+
+PKG=${INPUT##*/}
+
+(tar -xf $PKG) || exit 1
+
+mkdir $TAR_FOLDER 2>/dev/null 
+mv $PKG "$TAR_FOLDER/$PKG"
+
+PKG_FOLDER=${PKG%.*.*}
+
+cd $PKG_FOLDER
+source *.info
+if [ -z $DOWNLOAD_x86_64 ]; then
+  (wget -N $DOWNLOAD) || (echo "failed to download resource" && exit 1) 
+  DL_NAME=${DOWNLOAD##*/}
+else
+  (wget -N $DOWNLOAD_x86_64) || (echo "failed to download x86_64 resource" && exit 1)
+  DL_NAME=${DOWNLOAD_x86_64##*/}
+  MD5SUM=$MD5SUM_x86_64
+fi
+
+checksum=$(md5sum $DL_NAME | cut -d' ' -f1)
+
+if ! [[ $checksum == $MD5SUM ]]; then
+  echo "md5sum of downloaded source doesn't match!" && exit 1
+fi
+
+echo "package is ready in: \"$(pwd)\""
+echo "dependencies: \"$REQUIRES\""
+
+echo "build package now? [N/y]"
+read BUILD
+
+if [[ $BUILD == "y" ]]; then
+  sudo ./*.SlackBuild
+fi
+
+cd $C_FOLDER
+
+exit 0

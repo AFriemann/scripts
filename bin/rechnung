@@ -18,10 +18,8 @@ month () {
 }
 
 date=$(date +'%d. %B %Y')
-#latex_folder=~/Work/latex
-latex_folder="/media/5bc93470-5e29-42e5-97fb-5ec3832befd2/aljosha/Work/latex"
-#rechnungs_folder=~/Work/rechnungen
-rechnungs_folder="/media/5bc93470-5e29-42e5-97fb-5ec3832befd2/aljosha/Work/rechnungen"
+latex_folder=~/Work/latex
+rechnungs_folder=~/Work/rechnungen
 rechnungs_template="rechnung.tex"
 
 wageperhour="12.00"
