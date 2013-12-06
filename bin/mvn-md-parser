@@ -1,0 +1,73 @@
+#!/usr/bin/env python
+
+import xml.etree.ElementTree as ET
+import sys
+
+help_msg = 'mvn-md-parser [-c classifier] file'
+
+if len(sys.argv) == 1:
+    print "No input file given!"
+    print help_msg
+    sys.exit(1)
+elif len(sys.argv) == 2:
+    if sys.argv[1] == '-h':
+        print help_msg
+        sys.exit(0)
+    classifier = None
+    xml_file = sys.argv[1]
+else:
+    classifier = sys.argv[2]
+    xml_file = sys.argv[3]
+
+#print "parsing xml file: " + xml_file
+
+xml_tree = ET.parse(xml_file)
+
+xml_root = xml_tree.getroot()
+
+for version in xml_root.findall('.//versioning/snapshotVersions/snapshotVersion'):
+    if classifier:
+        current_classifier = version.find('classifier')
+        if current_classifier is not None and current_classifier.text == classifier:
+            break
+    else:
+        break
+        
+
+print version.find('value').text
+sys.exit(0)
+
+# example xml file:
+
+#<?xml version="1.0" encoding="UTF-8"?>
+#<metadata modelVersion="1.1.0">
+  #<groupId>com.patagona</groupId>
+  #<artifactId>com.patagona.hadoop</artifactId>
+  #<version>0.0.1-SNAPSHOT</version>
+  #<versioning>
+    #<snapshot>
+      #<timestamp>20131128.160933</timestamp>
+      #<buildNumber>2</buildNumber>
+    #</snapshot>
+    #<lastUpdated>20131128160933</lastUpdated>
+    #<snapshotVersions>
+      #<snapshotVersion>
+        #<extension>jar</extension>
+        #<value>0.0.1-20131128.160933-2</value>
+        #<updated>20131128160933</updated>
+      #</snapshotVersion>
+      #<snapshotVersion>
+        #<extension>pom</extension>
+        #<value>0.0.1-20131128.160933-2</value>
+        #<updated>20131128160933</updated>
+      #</snapshotVersion>
+      #<snapshotVersion>
+        #<classifier>jar-with-dependencies</classifier>
+        #<extension>jar</extension>
+        #<value>0.0.1-20131128.160933-2</value>
+        #<updated>20131128160933</updated>
+      #</snapshotVersion>
+    #</snapshotVersions>
+  #</versioning>
+#</metadata>
+
