@@ -1,5 +1,4 @@
-#!/bin/sh
-
+#!/bin/sh 
 month () {
   case $@ in
     Januar) echo "1" ;;
@@ -18,8 +17,8 @@ month () {
 }
 
 date=$(date +'%d. %B %Y')
-latex_folder=~/Work/latex
-rechnungs_folder=~/Work/rechnungen
+latex_folder=/data/Work/latex
+rechnungs_folder=/data/Work/rechnungen
 rechnungs_template="rechnung.tex"
 
 wageperhour="12.00"
