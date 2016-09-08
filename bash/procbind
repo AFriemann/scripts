@@ -22,10 +22,9 @@ get_pid() {
 }
 
 check_pid() { ps -p "$1" &>/dev/null; }
-check_proc() { 
+check_proc() {
     local pid=$1
-    local args=${@:2}
-    ps -p "$pid" --no-headers --format="%a" | grep -q "${args}"
+    shift && ps -p "$pid" -o args | grep -q "${@}"
 }
 
 [ -z "$1" ] && error "no proc supplied" && exit 1
