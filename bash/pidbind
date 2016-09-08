@@ -29,7 +29,8 @@ if ! check_pid "$1"; then
 fi
 
 BINDPID=$1
-CMD=${@:2}
+shift
+CMD=${@}
 
 success "binding to lifetime of pid $BINDPID"
 info "starting $CMD"

@@ -35,9 +35,11 @@ BINDPID=$(get_pid "$BINDPROC")
 
 if ! check_pid "$BINDPID"; then
     error "process for ${BINDPROC} does not exist" && exit 1
+else
+    shift
 fi
 
-CMD=${@:2}
+CMD=${@}
 
 success "binding to lifetime of process matching $BINDPROC"
 info "starting $CMD"
