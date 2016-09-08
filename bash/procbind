@@ -40,7 +40,7 @@ fi
 
 CMD=${@}
 
-success "binding to lifetime of process matching $BINDPROC"
+success "binding to lifetime of process matching $BINDPROC with pid $BINDPID"
 info "starting $CMD"
 
 $CMD &
