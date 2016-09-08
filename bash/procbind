@@ -15,16 +15,17 @@ warning() { yellow "$@"; }
 error() { red "$@"; }
 success() { green "$@"; }
 
+get_proc() { ps -p "$1" -o args; }
 get_procs() { ps -A -o pid,args; }
 get_pid() {
     local proc=$1
     get_procs | grep "${proc}" | grep -v "^ $$" | grep -v "grep" | awk -F' ' '{ print $1 }'
 }
 
-check_pid() { ps -p "$1" &>/dev/null; }
+check_pid() { ps -p "$1" >/dev/null 2>&1; }
 check_proc() {
     local pid=$1
-    shift && ps -p "$pid" -o args | grep -q "${@}"
+    shift && get_proc "${pid}" | grep -q "${@}"
 }
 
 [ -z "$1" ] && error "no proc supplied" && exit 1

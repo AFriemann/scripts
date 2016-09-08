@@ -15,10 +15,12 @@ warning() { yellow "$@"; }
 error() { red "$@"; }
 success() { green "$@"; }
 
-check_pid() { ps -p "$1" &>/dev/null; }
+get_proc() { ps -p "$1" -o args; }
+
+check_pid() { ps -p "$1" >/dev/null 2>&1; }
 check_proc() { 
     local pid=$1
-    shift && ps -p "$pid" -o args | grep -q "${@}"
+    shift && get_proc "${pid}" | grep -q "${@}"
 }
 
 [ -z "$1" ] && error "no pid supplied" && exit 1
