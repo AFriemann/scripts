@@ -18,7 +18,7 @@ success() { green "$@"; }
 get_procs() { ps -A -o pid,args; }
 get_pid() {
     local proc=$1
-    get_procs | grep "${proc}" | grep -v "^ $$" | grep -v "grep" | cut -d' ' -f2
+    get_procs | grep "${proc}" | grep -v "^ $$" | grep -v "grep" | awk -F' ' '{ print $1 }'
 }
 
 check_pid() { ps -p "$1" &>/dev/null; }
