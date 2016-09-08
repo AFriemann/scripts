@@ -1,0 +1,18 @@
+#!/usr/local/bin/bash
+# -*- coding: utf-8 -*-
+# peervpnctl.sh
+# created: 2016-09-07
+# author: Aljosha Friemann aljosha.friemann@gmail.com
+
+# check for root
+[ "$EUID" -ne 0 ] && echo "Please run as root!" && exit 1
+
+CONFIG=${1:-/etc/peervpn/peervpn.conf}
+TAG=${2:-peervpn}
+
+[ -z "$CONFIG" ] && echo "No config file given" && exit 1
+[ ! -f "$CONFIG" ] && echo "no such file: $CONFIG" && exit 1
+
+exec /usr/local/sbin/peervpn "$CONFIG" > >(logger -t "${TAG}" -s -p daemon.info) 2> >(logger -t "${TAG}" -s -p daemon.err)
+
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4 fenc=utf-8

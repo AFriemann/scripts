@@ -46,10 +46,11 @@ eval ": \${${name}_enable:=\"NO\"}"
 pidfile="/var/run/${filename}.pid"
 configfile="/usr/local/etc/peervpn/${config_name}.conf"
 
-procname="/usr/local/sbin/peervpn"
+procname="/usr/local/sbin/peervpn-init"
+initname="${procname}-init"
 command="/usr/sbin/daemon"
 
 required_files="${configfile}"
-command_args=" -f -p ${pidfile} ${procname} ${configfile}"
+command_args=" -f -p ${pidfile} ${initname} ${configfile} ${filename}"
 
 run_rc_command "$1"
