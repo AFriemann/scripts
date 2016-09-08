@@ -15,7 +15,7 @@ warning() { yellow "$@"; }
 error() { red "$@"; }
 success() { green "$@"; }
 
-get_procs() { ps -e --no-headers -o pid,args; }
+get_procs() { ps -A --no-headers -o pid,args; }
 get_pid() {
     local proc=$1
     get_procs | grep "${proc}" | grep -v "^ $$" | grep -v "grep" | cut -d' ' -f2
