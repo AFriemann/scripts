@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # -*- coding: utf-8 -*-
 # pidbind.sh
 # created: 2016-09-07
@@ -15,23 +15,31 @@ warning() { yellow "$@"; }
 error() { red "$@"; }
 success() { green "$@"; }
 
+get_procs() { ps -e --no-headers -o pid,args }
+get_pid() {
+    local proc=$1
+    get_procs | grep "${proc}" | grep -v "^ $$" | grep -v "grep" | cut -d' ' -f2
+}
+
 check_pid() { ps -p "$1" &>/dev/null; }
 check_proc() { 
     local pid=$1
     local args=${@:2}
-    ps -p "$pid" --no-headers -o args | grep -q "${args}"
+    ps -p "$pid" --no-headers --format="%a" | grep -q "${args}"
 }
 
-[ -z "$1" ] && error "no pid supplied" && exit 1
+[ -z "$1" ] && error "no proc supplied" && exit 1
 
-if ! check_pid "$1"; then
-    error "process ${1} does not exist" && exit 1
+BINDPROC=$1
+BINDPID=$(get_pid "$BINDPROC")
+
+if ! check_pid "$BINDPID"; then
+    error "process for ${BINDPROC} does not exist" && exit 1
 fi
 
-BINDPID=$1
 CMD=${@:2}
 
-success "binding to lifetime of pid $BINDPID"
+success "binding to lifetime of process matching $BINDPROC"
 info "starting $CMD"
 
 $CMD &
