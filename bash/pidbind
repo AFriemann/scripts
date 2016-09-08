@@ -1,0 +1,52 @@
+#!/bin/sh
+# -*- coding: utf-8 -*-
+# pidbind.sh
+# created: 2016-09-07
+# author: Aljosha Friemann aljosha.friemann@gmail.com
+
+output() { echo -e "`date`: $@"; }
+
+red() { output "\033[0;31m$@\033[0m"; }
+green() { output "\033[0;32m$@\033[0m"; }
+yellow() { output "\033[0;33m$@\033[0m"; }
+
+info() { output "$@"; }
+warning() { yellow "$@"; }
+error() { red "$@"; }
+success() { green "$@"; }
+
+check_pid() { ps -p "$1" &>/dev/null; }
+check_proc() { 
+    local pid=$1
+    local args=${@:2}
+    ps -p "$pid" --no-headers --format="%a" | grep -q "${args}"
+}
+
+[ -z "$1" ] && error "no pid supplied" && exit 1
+
+if ! check_pid "$1"; then
+    error "process ${1} does not exist" && exit 1
+fi
+
+BINDPID=$1
+CMD=${@:2}
+
+success "binding to lifetime of pid $BINDPID"
+info "starting $CMD"
+
+$CMD &
+PROCPID=$!
+
+while check_pid "$BINDPID"; do
+    if ! check_proc "$PROCPID" "$CMD"; then
+        success "process stopped, exiting"
+        exit 0
+    fi
+    sleep 0.5
+done
+
+warning "bound process stopped, exiting"
+
+check_proc "$PROCPID" "$CMD" && kill "$PROCPID"
+
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4 fenc=utf-8
