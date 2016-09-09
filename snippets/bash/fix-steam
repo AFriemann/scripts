@@ -1,0 +1,3 @@
+#!/bin/sh
+
+find ~/.steam/root/ -name "libgpg-error.so*" -print
