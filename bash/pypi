@@ -1,0 +1,39 @@
+#!/bin/sh
+
+output() { echo -e "`date`: $@"; }
+
+red() { output "\033[0;31m$@\033[0m"; }
+green() { output "\033[0;32m$@\033[0m"; }
+yellow() { output "\033[0;33m$@\033[0m"; }
+
+info() { output "$@"; }
+warning() { yellow "$@"; }
+error() { red "$@"; }
+success() { green "$@"; }
+
+TARGET=${2:-pypi}
+
+end() {
+    if [ $1 -eq 0 ]; then
+        success "success" && exit 0
+    else
+        error "failure" && exit 1
+    fi
+}
+
+case $1 in
+    update)
+        info "uploading new version to ${TARGET}"
+        python setup.py sdist upload -r "${TARGET}"
+        end $?
+        ;;
+    register)
+        info "registering package at ${TARGET}"
+        python setup.py register -r "${TARGET}"
+        end $?
+        ;;
+    *)
+        error "unknown command: $*"
+        exit 1
+        ;;
+esac
