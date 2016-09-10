@@ -1,7 +1,58 @@
-#!/bin/sh
+#!/bin/bash
 
-echo "delete these files:"
+output() { echo -en "$@"; }
 
-find ~/.local/share/Steam/ -iname "libstdc++.so.6*" -print
-find ~/.local/share/Steam/ -iname "libgcc_s.so.1*" -print
+red() { output "\033[0;31m$@\033[0m"; }
+green() { output "\033[0;32m$@\033[0m"; }
+yellow() { output "\033[0;33m$@\033[0m"; }
+
+pretty_path() {
+    local input="$@"
+    input=$(echo "$input" | sed "s;${HOME};~;g")
+    echo "$input"
+}
+
+so_files() {
+    local dir=$1
+    local iname=$2
+
+    find "$dir"/ -iname "$iname" -and -not -iname "*.py" -print
+}
+
+yes_no() {
+    local default=${1:-y}
+
+    local input
+    read input
+
+    local input=${input:-$default}
+
+    [[ "$input" =~ ye?s? ]]
+}
+
+output "This little fix should solve any problems with errors like these:\n\n \
+     \tlibGL error: unable to load driver: radeonsi_dri.so\n \
+     \tlibGL error: driver pointer missing\n \
+     \tlibGL error: failed to load driver: radeonsi\n \
+     \tlibGL error: unable to load driver: swrast_dri.so\n \
+     \tlibGL error: failed to load driver: swrast\n\n"
+
+yellow "delete these files?\n\n"
+
+steam_dir=~/.local/share/Steam
+
+for file in $(so_files "$steam_dir" "libstdc++.so*"); do
+    pretty_file=$(pretty_path ${file})
+    output "$pretty_file [y]/n "
+
+    yes_no && green "deleting ${pretty_file}\n"
+done
+
+for file in $(so_files "$steam_dir" "libgcc_s.so*"); do
+    pretty_file=$(pretty_path ${file})
+    output "$pretty_file [y]/n "
+
+    yes_no && green "deleting ${pretty_file}\n"
+    rm -f "$file"
+done
 
