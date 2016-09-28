@@ -1,0 +1,58 @@
+#!/bin/sh
+# -*- coding: utf-8 -*-
+# get-ips.sh
+# created: 2016-04-06
+# author: Aljosha Friemann aljosha.friemann@gmail.com
+
+# directory safety. does not resolve links!
+# DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+help () {
+    echo -e "usage: $0 [COMMANDS]\n
+    possible commands are:\n
+    \t-h this help message\n"
+}
+
+log () {
+    if which logger &>/dev/null; then
+        # log to syslog daemon
+        logger -s -t "$prog" "$@"
+    else
+        echo "$(date) ["$prog"] $@" >> "$LOGFILE"
+    fi
+}
+
+while getopts "h" optname
+    do
+    case "$optname" in
+        "h")
+            help
+            exit 0
+            ;;
+        "?")
+            echo "unknown option $OPTARG"
+            exit 1
+            ;;
+        ":")
+            echo "no argument value for option $OPTARG"
+            exit 1
+            ;;
+        *)
+            # should not occur
+            echo "unknown error while processing options"
+            exit $?
+            ;;
+    esac
+done && shift $((OPTIND-1))
+
+# check for root
+# [ "$EUID" -ne 0 ] && log "Please run as root!" && exit 1
+
+REGION=${AWS_REGION:-eu-west-1}
+FILE=$1
+
+[ -z "$FILE" -o ! -f "$FILE" ] && echo "no valid file given" && exit 1
+
+aws --region "$REGION" ec2 describe-instances --filters file://"$(realpath $FILE)" | jq -r '.Reservations[].Instances[]'
+
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4 fenc=utf-8

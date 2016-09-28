@@ -1,0 +1,72 @@
+#!/bin/sh
+# -*- coding: utf-8 -*-
+# get-ips.sh
+# created: 2016-04-06
+# author: Aljosha Friemann aljosha.friemann@gmail.com
+
+# directory safety. does not resolve links!
+# DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+help () {
+    echo -e "usage: $0 [COMMANDS] [INSTANCE-ID [..]]\n
+    possible commands are:\n
+    \t-f filter file
+    \t-r aws region
+    \t-h this help message\n"
+}
+
+log () {
+    if which logger &>/dev/null; then
+        # log to syslog daemon
+        logger -s -t "$prog" "$@"
+    else
+        echo "$(date) ["$prog"] $@" >> "$LOGFILE"
+    fi
+}
+
+while getopts "hf:r:" optname
+    do
+    case "$optname" in
+        "h")
+            help
+            exit 0
+            ;;
+        "f")
+            FILTER_FILE=$(realpath $OPTARG)
+            [ ! -f "$FILTER_FILE" -o -r "$FILTER_FILE" ] && echo "no such file: $FILTER_FILE" && exit 1
+            ;;
+        "r")
+            AWS_REGION=$OPTARG
+            ;;
+        "?")
+            echo "unknown option $OPTARG"
+            exit 1
+            ;;
+        ":")
+            echo "no argument value for option $OPTARG"
+            exit 1
+            ;;
+        *)
+            # should not occur
+            echo "unknown error while processing options"
+            exit $?
+            ;;
+    esac
+done && shift $((OPTIND-1))
+
+# check for root
+# [ "$EUID" -ne 0 ] && log "Please run as root!" && exit 1
+
+REGION=${AWS_REGION:-eu-west-1}
+
+if [ -n "$FILTER_FILE" ]; then
+    ARGS=--filters 
+fi
+
+for arg in $@; do
+    ARGS=$ARGS --instance-ids 
+done
+
+aws --region "$REGION" ec2 describe-instances --filters file://"$(realpath $FILE)" | jq -r '.Reservations[].Instances[].PrivateIpAddress'
+
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4 fenc=utf-8
