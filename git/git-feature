@@ -1,0 +1,8 @@
+#!/bin/sh
+
+ID=$1
+DESC=${@:2}
+
+BRANCH=features/"$ID"_"${DESC//[ ]/_}"
+
+git --git-dir="$GIT_DIR" --work-tree="$GIT_WORK_TREE" checkout -b "$BRANCH"
