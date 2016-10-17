@@ -1,8 +1,14 @@
 #!/bin/sh
 
+# Usage:
+# ./git-feature PM-1234 "this is an issue description"
+
 ID=$1
 DESC=${@:2}
 
+[ -z "$ID" ] && echo "Feature ID is empty" && exit 1
+[ -z "$DESC" ] && echo "Description is empty" && exit 1
+
 BRANCH=features/"$ID"_"${DESC//[ ]/_}"
 
-git --git-dir="$GIT_DIR" --work-tree="$GIT_WORK_TREE" checkout -b "$BRANCH"
+git checkout -b "$BRANCH"
