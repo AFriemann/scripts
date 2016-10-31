@@ -45,14 +45,13 @@ for file in $(so_files "$steam_dir" "libstdc++.so*"); do
     pretty_file=$(pretty_path ${file})
     output "$pretty_file [y]/n "
 
-    yes_no && green "deleting ${pretty_file}\n"
+    yes_no && green "deleting ${pretty_file}\n" && rm -f "$file"
 done
 
 for file in $(so_files "$steam_dir" "libgcc_s.so*"); do
     pretty_file=$(pretty_path ${file})
     output "$pretty_file [y]/n "
 
-    yes_no && green "deleting ${pretty_file}\n"
-    rm -f "$file"
+    yes_no && green "deleting ${pretty_file}\n" && rm -f "$file"
 done
 

@@ -1,11 +1,5 @@
 #!/bin/sh
 
-ACTION=$1
-
-INPUT=$2
-OUTPUT=$3
-PASSWORD_FILE=$4
-
 help() {
     echo -e "usage:\n\t$0 encrypt|decrypt FILE OUTPUT KEYFILE"
 }
@@ -13,15 +7,22 @@ help() {
 encrypt() {
     local PASS=$2
 
-    openssl enc -aes-256-cbc -in "$INPUT" -out "${INPUT}.enc" -k "$PASS"
+    openssl enc -aes-256-cbc -in "$INPUT" -out "${OUTPUT}" -k "$PASS"
 }
 
 decrypt() {
     local PASS=$2
 
-    openssl enc -d -aes-256-cbc -in "$INPUT" -out "${INPUT}.gpg" -k "$PASS"
+    openssl enc -d -aes-256-cbc -in "$INPUT" -out "${OUTPUT}" -k "$PASS"
 }
 
+ACTION=$1
+
+INPUT=$2
+OUTPUT=$3
+PASSWORD_FILE=$4
+
+[ -z "$ACTION" -o -z "$INPUT" -o -z "$OUTPUT" ] && help && exit 1
 [ ! -r "$PASSWORD_FILE" ] && echo "no such file: $PASSWORD_FILE" && help && exit 1
 
 case $ACTION in
