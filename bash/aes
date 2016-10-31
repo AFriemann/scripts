@@ -8,12 +8,20 @@ encrypt() {
     local PASS=$2
 
     openssl enc -aes-256-cbc -in "$INPUT" -out "${OUTPUT}" -k "$PASS"
+
+    if [ $? -ne 0 ]; then
+        rm "$OUTPUT" && return 1
+    fi
 }
 
 decrypt() {
     local PASS=$2
 
     openssl enc -d -aes-256-cbc -in "$INPUT" -out "${OUTPUT}" -k "$PASS"
+
+    if [ $? -ne 0 ]; then
+        rm "$OUTPUT" && return 1
+    fi
 }
 
 ACTION=$1
