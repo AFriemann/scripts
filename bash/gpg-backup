@@ -1,0 +1,52 @@
+#!/bin/sh
+
+help() {
+    echo -e "usage:\n\t$0 KEY KEYFILE"
+}
+
+clean_dir() {
+    local DIR=$1
+
+    find "$DIR"/ -type f | xargs -r shred -n5 --remove
+}
+
+package_dir() {
+    local DIR=$1
+    local OUTPUT=$2
+
+    pushd "$DIR" &>/dev/null && tar czvf "$OUTPUT" * && popd &>/dev/null
+}
+
+KEY=$1
+KEYFILE=$2
+
+[ -z "$KEY" ] && help && exit 1
+[ ! -r "$KEYFILE" ] && help && exit 1
+
+if ! which aes &>/dev/null; then echo "aes not found in PATH" && exit 1; fi
+
+TMP_DIR=$(mktemp -d)
+
+echo "creating temporary directory"
+
+sudo mount -t tmpfs tmpfs "$TMP_DIR" && mkdir "$TMP_DIR"/backup
+
+echo "exporting keys"
+
+gpg --export-secret-keys --armor --output "${TMP_DIR}/backup/${KEY}"
+gpg --export-ownertrust > "${TMP_DIR}/backup/${KEY}-trust.txt"
+
+gpg --output "${TMP_DIR}/backup/${KEY}.revoke" --gen-revoke "$KEY"
+
+ARCHIVE="$TMP_DIR"/"$KEY".tar.gz
+
+echo "packaging backup" && package_dir "$TMP_DIR"/backup "$ARCHIVE"
+
+echo "encrypting backup" && aes encrypt "$ARCHIVE" "$ARCHIVE".aes "$KEYFILE"
+
+echo "moving file" && mv "$ARCHIVE".aes ./
+
+echo "removing backup"
+
+clean_dir "$TMP_DIR" && sudo umount "$TMP_DIR" && rm -rf "$TMP_DIR"
+
