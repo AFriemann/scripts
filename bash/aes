@@ -5,7 +5,7 @@ help() {
 }
 
 encrypt() {
-    local PASS=$1
+    local PASS="$1"
 
     openssl enc -aes-256-cbc -in "$INPUT" -out "${OUTPUT}" -k "$PASS"
 
@@ -15,7 +15,7 @@ encrypt() {
 }
 
 decrypt() {
-    local PASS=$1
+    local PASS="$1"
 
     openssl enc -d -aes-256-cbc -in "$INPUT" -out "${OUTPUT}" -k "$PASS"
 
