@@ -24,11 +24,11 @@ decrypt() {
     fi
 }
 
-ACTION=$1
+ACTION="$1"
 
-INPUT=$2
-OUTPUT=$3
-PASSWORD_FILE=$4
+INPUT="$2"
+OUTPUT="$3"
+PASSWORD_FILE="$4"
 
 [ -z "$ACTION" -o -z "$INPUT" -o -z "$OUTPUT" ] && help && exit 1
 [ ! -r "$PASSWORD_FILE" ] && echo "no such file: $PASSWORD_FILE" && help && exit 1
