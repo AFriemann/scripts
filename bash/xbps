@@ -6,11 +6,19 @@ error() { output "\033[0;31m$@\033[0m"; }
 success() { output "\033[0;32m$@\033[0m"; }
 warning() { output "\033[0;33m$@\033[0m"; }
 
+commands=( "install" "search" "remove" "sync" "update" "dependencies" "dependants" "list-files" "info" )
+
 help() {
-    echo -e "$0 install|search [PACKAGE]"
+    echo -en "$0 COMMAND [PACKAGE]\n"
+    echo -en "    commands:\n"
+    for cmd in ${commands[@]}; do
+        echo -en "        ${cmd}\n"
+    done
 }
 
 command=$1; shift
+
+[ -z "$command" ] && help && exit 1
 
 case $command in
     install)
@@ -19,14 +27,26 @@ case $command in
     search)
         xbps-query -vRs $@
         ;;
+    info)
+        xbps-query -vR $@
+        ;;
     remove)
-        sudo xbps-remove $@
+        sudo xbps-remove -R $@
         ;;
     sync)
         sudo xbps-install -S $@
         ;;
     update)
         sudo xbps-install -Su $@
+        ;;
+    dependencies)
+        sudo xbps-query -Rx $@
+        ;;
+    dependants)
+        sudo xbps-query -RX $@
+        ;;
+    list-files)
+        sudo xbps-query -Rf $@
         ;;
     *)
         error "Unknown command: $*" && help && exit 1
