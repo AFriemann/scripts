@@ -22,6 +22,12 @@ case $command in
     remove)
         sudo xbps-remove $@
         ;;
+    sync)
+        sudo xbps-install -S
+        ;;
+    update)
+        error "NOOOOPE" && exit 1
+        ;;
     *)
         error "Unknown command: $*" && help && exit 1
         ;;
