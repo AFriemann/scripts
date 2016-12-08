@@ -23,10 +23,10 @@ case $command in
         sudo xbps-remove $@
         ;;
     sync)
-        sudo xbps-install -S
+        sudo xbps-install -S $@
         ;;
     update)
-        error "NOOOOPE" && exit 1
+        sudo xbps-install -Su $@
         ;;
     *)
         error "Unknown command: $*" && help && exit 1
