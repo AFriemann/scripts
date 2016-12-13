@@ -60,13 +60,13 @@ done && shift $((OPTIND-1))
 REGION=${AWS_REGION:-eu-west-1}
 
 if [ -n "$FILTER_FILE" ]; then
-    ARGS=--filters 
+    ARGS="--filters 'file://$(realpath $FILTER_FILE)'"
 fi
 
 for arg in $@; do
-    ARGS=$ARGS --instance-ids 
+    ARGS="$ARGS --instance-ids $arg"
 done
 
-aws --region "$REGION" ec2 describe-instances --filters file://"$(realpath $FILE)" | jq -r '.Reservations[].Instances[].PrivateIpAddress'
+aws --region "$REGION" ec2 describe-instances $ARGS | jq -r '.Reservations[].Instances[].PrivateIpAddress'
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4 fenc=utf-8
