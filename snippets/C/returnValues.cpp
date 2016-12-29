@@ -2,7 +2,7 @@
 #include <iostream>
 
 int testFunction(int returnValue) {
-  return returnValue; 
+  return returnValue;
 }
 
 int main(int argc, char **argv) {
@@ -11,6 +11,6 @@ int main(int argc, char **argv) {
   } else if (testFunction(1)) {
     std::cout << "return value 1 means true" << std::endl;
   }
-  
+
   return 0;
 }

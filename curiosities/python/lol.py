@@ -9,6 +9,8 @@
 
 """
 
+# ITF: Why you should never use dicts as default values!
+
 def fun(c={}):
     print('old c: %s' % c)
     c.update({'foo': 'bar'})
