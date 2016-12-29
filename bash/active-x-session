@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PID=$(pgrep -f '(dbus-launch|dbus-run-session)')
+PID=$(pgrep -f 'dbus-run-session')
 USER=$(ps -o user --no-headers $PID)
 HOME=$(getent passwd $USER | cut -d: -f6)
 XAUTHORITY="$HOME/.Xauthority"
