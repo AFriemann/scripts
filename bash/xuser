@@ -1,0 +1,19 @@
+#!/bin/sh
+
+user=`pinky -fw | awk '{ if ($2 == ":'$displaynum'" || $(NF) == ":'$displaynum'" ) { print $1; exit; } }'`
+
+if [ x"$user" = x"" ]; then
+        startx=`pgrep -n startx`
+        if [ x"$startx" != x"" ]; then
+                user=`ps -o user --no-headers $startx`
+        fi
+fi
+if [ x"$user" != x"" ]; then
+        userhome=`getent passwd $user | cut -d: -f6`
+        export XAUTHORITY=$userhome/.Xauthority
+else
+        export XAUTHORITY=""
+fi
+
+echo $user
+
