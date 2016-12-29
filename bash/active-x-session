@@ -1,10 +1,10 @@
 #!/bin/sh
 
 PID=$(pgrep -f 'dbus-run-session')
-
-[ -z "$PID" ] && exit 1
-
 USER=$(ps -o user --no-headers $PID)
+
+[ -z "$USER" -o -z "$PID" ] && exit 1
+
 HOME=$(getent passwd $USER | cut -d: -f6)
 XAUTHORITY="$HOME/.Xauthority"
 for x in /tmp/.X11-unix/*; do
