@@ -1,0 +1,4 @@
+#!/bin/sh
+
+export SVDIR="$HOME/service"
+sv $@
