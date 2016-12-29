@@ -1,0 +1,19 @@
+#!/bin/sh
+
+PID=$(pgrep -f '(dbus-launch|dbus-run-session)')
+USER=$(ps -o user --no-headers $PID)
+HOME=$(getent passwd $USER | cut -d: -f6)
+XAUTHORITY="$HOME/.Xauthority"
+for x in /tmp/.X11-unix/*; do
+    displaynum=`echo $x | sed 's#/tmp/.X11-unix/X##'`
+    if [ x"$XAUTHORITY" != x"" ]; then
+        export DISPLAY=":$displaynum"
+    fi
+done
+
+echo "export PID='$PID'"
+echo "export USER='$USER'"
+echo "export HOME='$HOME'"
+echo "export XAUTHORITY='$XAUTHORITY'"
+echo "export DISPLAY='$DISPLAY'"
+
