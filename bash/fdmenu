@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ -r "${HOME}/.dmenu_filter" ]; then
+	FILTER=`paste -s -d '|' "$HOME"/.dmenu_filter`
+	if [ -n "$FILTER" ]; then
+		dmenu_path | awk "!/${FILTER}/" | dmenu $@
+		exit $?
+	fi
+fi
+
+dmenu_run $@
