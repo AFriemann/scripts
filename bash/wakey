@@ -1,0 +1,29 @@
+#!/bin/sh
+
+output() { echo -e "`date`: $@"; }
+
+red() { output "\033[0;31m$@\033[0m"; }
+green() { output "\033[0;32m$@\033[0m"; }
+yellow() { output "\033[0;33m$@\033[0m"; }
+
+info() { output "$@"; }
+warning() { yellow "$@"; }
+error() { red "$@"; }
+success() { green "$@"; }
+
+help () {
+    echo "usage: $0 HOSTNAME"
+}
+
+[ -r "${HOME}/.wakeyrc" ] && . "$HOME"/.wakeyrc
+
+[ -z "$1" ] && help && exit 1
+
+eval MAC=\$${1}_mac
+eval IP=\$${1}_ip
+
+[ -z "$MAC" ] && error "no mac specified for $1"  && exit 1
+[ -z "$IP" ] && error "no ip specified for $1"  && exit 1
+
+wol "$MAC"
+
