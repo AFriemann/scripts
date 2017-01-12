@@ -1,4 +1,6 @@
 #!/bin/sh
 
+[ -z "$HOME" ] && HOME=$(awk -F':' "{ if (\$3 == $(id -u)) print \$6 }" /etc/passwd)
+
 export SVDIR="$HOME/.local/service"
 sv $@
