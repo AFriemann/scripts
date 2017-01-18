@@ -1,0 +1,30 @@
+#!/bin/env python3
+
+import sys, re, pipes
+
+from subprocess import Popen, PIPE
+
+def jq(json, query):
+    out, err = Popen(['jq', '-r', '.{}'.format(query)], stdout=PIPE, stderr=PIPE, stdin=PIPE).communicate(input=json.encode())
+    return out.decode().splitlines()
+
+format_string = sys.argv[1]
+
+vars_from_string = re.findall(r'(\$(?:([a-zA-Z_]+(?:\[[0-9]*\]|.[a-zA-Z_]+)*)|{([a-zA-Z_]+(?:\[[0-9]*\]|.[a-zA-Z_]+)*)}))', format_string)
+
+stdin = sys.stdin.read().strip()
+
+dictionaries = {}
+
+for variable, group_a, group_b in vars_from_string:
+    query = group_a or group_b
+    values = jq(stdin, query)
+
+    for i in range(0, len(values)):
+        if i not in dictionaries: dictionaries[i] = {}
+        dictionaries[i][variable] = values[i]
+
+for dictionary in dictionaries.values():
+    pattern = re.compile('|'.join(re.escape(key) for key in dictionary.keys()))
+    print(pattern.sub(lambda x: dictionary[x.group()], format_string))
+
