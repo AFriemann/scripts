@@ -1,0 +1,27 @@
+#!/bin/sh
+
+read_entries () {
+    grep -i '^menuentry' /boot/grub/grub.cfg | cut -d"'" -f2
+}
+
+is_entry () {
+    local ENTRY="$1"
+
+    if [ -n "$ENTRY" ] && grep -i '^menuentry' /boot/grub/grub.cfg | grep -q "$ENTRY"; then
+        return 0
+    fi
+
+    return 1
+}
+
+TARGET="$1"
+
+read_entries
+
+while ! is_entry "$TARGET"; do
+    read TARGET
+done
+
+echo "rebooting to $TARGET"
+
+grub-reboot "$TARGET" && reboot
