@@ -1,5 +1,7 @@
 #!/bin/sh
 
-while ! ssh "$1"; do
+while ! ssh "$1" exit &>/dev/null; do
     sleep 3
 done
+
+exec ssh "$1"
