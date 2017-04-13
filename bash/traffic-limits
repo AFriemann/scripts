@@ -12,7 +12,7 @@ find-kvm-vm () {
     [ -z "$device" ] && return
 
     for vm in $(virsh list | grep running | awk '{print $2}'); do
-        virsh dumpxml $vm | grep -q "$VNET" && echo $vm && return
+        virsh dumpxml $vm | grep -q "dev='$device'" && echo $vm && return
     done
 }
 
@@ -30,6 +30,12 @@ show-limits () {
 
 for device in $(devices); do
     MAC="$(mac "$device")"
-    echo "$device${MAC:+ $MAC}${KVM:+ $(find-kvm-vm "$device")}:"
+    VM=
+
+    if $KVM && [[ "$device" =~ "vnet" ]]; then
+        VM="$(find-kvm-vm "$device")"
+    fi
+
+    echo "$device${MAC:+ $MAC}${VM:+ ($VM)}:"
     echo -e "$(show-limits "$device" | sed 's/^/\t/')"
 done
