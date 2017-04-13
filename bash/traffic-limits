@@ -1,7 +1,25 @@
 #!/bin/bash
 
+KVM=${KVM:-}
+
 devices () {
     ip link | egrep "^[0-9]+" | awk -F':' '{ print $2 }'
+}
+
+find-kvm-vm () {
+    local device="$1"
+
+    [ -z "$device" ] && return
+
+    for vm in $(virsh list | grep running | awk '{print $2}'); do
+        virsh dumpxml $vm | grep -q "$VNET" && echo $vm && return
+    done
+}
+
+mac () {
+    local device="$1"
+
+    ip link show dev "$device" | grep "link/ether" | awk -F' ' '{ print $2 }'
 }
 
 show-limits () {
@@ -11,6 +29,7 @@ show-limits () {
 }
 
 for device in $(devices); do
-    echo "$device:"
+    MAC="$(mac "$device")"
+    echo "$device${MAC:+ $MAC}${KVM:+ $(find-kvm-vm "$device")}:"
     echo -e "$(show-limits "$device" | sed 's/^/\t/')"
 done
