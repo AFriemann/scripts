@@ -1,0 +1,16 @@
+#!/bin/bash
+
+devices () {
+    ip link | egrep "^[0-9]+" | awk -F':' '{ print $2 }'
+}
+
+show-limits () {
+    local device="$1"
+
+    tc qdisc show dev "$device"
+}
+
+for device in $(devices); do
+    echo "$device:"
+    echo -e "$(show-limits "$device" | sed 's/^/\t/')"
+done
