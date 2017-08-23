@@ -1,0 +1,36 @@
+_sv_services()
+{
+    find "$1"/* -maxdepth 0 -printf "%f\n"
+}
+
+_sv_module()
+{
+    local cmd svdir cur prev OPTS
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    case $prev in
+        sv|usv)
+            OPTS="status
+                  start
+                  stop
+                  restart"
+            COMPREPLY=( $(compgen -W "${OPTS[*]}" -- $cur) )
+            return 0
+            ;;
+        status|start|stop|restart)
+            cmd=${COMP_WORDS[COMP_CWORD-2]}
+            case $cmd in
+                sv)
+                    COMPREPLY=( $(compgen -W '$(_sv_services /var/service)' -- $cur) )
+                    ;;
+                usv)
+                    COMPREPLY=( $(compgen -W '$(_sv_services ~/.local/service)' -- $cur) )
+                    ;;
+            esac
+            return 0
+            ;;
+    esac
+    return 0
+}
+complete -F _sv_module sv usv
