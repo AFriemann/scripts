@@ -1,0 +1,10 @@
+#!/bin/bash
+
+ID="$1"
+HOST="$2"
+
+[[ ! $ID =~ .*.pub$ ]] && echo "File $ID does not look like a public key, aborting!" && exit 1
+
+cat "$ID" | \
+    ssh "$HOST" \
+        'umask 0077; mkdir -p .ssh 2>&1; cat >> .ssh/authorized_keys && echo "Key copied"'
