@@ -1,0 +1,78 @@
+#!/bin/bash
+# -*- coding: utf-8 -*-
+
+VAULT=${VAULT_PATH:-/usr/local/bin/vault}
+
+help() {
+    $VAULT help
+    echo "Quality-of-Life commands:"
+    echo -e "    cert-add\tadd a certificate"
+    echo -e "    cert-read\tread a certificate"
+    echo -e "    cert-delete\tdelete a certificate"
+    echo -e "    cert-list\tlist all stored certificates"
+    echo
+}
+
+cert-add() {
+    local DESC="vault cert-add NAME CERT [POLICY,[POLICY,..]]"
+
+    [ -n "$1" -a "$1" == "help" ] && echo "$DESC" && return 0
+
+    local NAME="$1"
+    local CERT="$2"
+    local POLICIES="${3:-default}"
+
+    [ -z "$NAME" ] && echo "$DESC" && return 1
+    [ -z "$CERT" -o ! -r "$CERT" ] && echo "$DESC" && return 1
+
+    $VAULT write "auth/cert/certs/${NAME}" \
+        display_name="$NAME" \
+        policies="$POLICIES" \
+        certificate="@${CERT}"
+}
+
+cert-delete() {
+    local DESC="Usage: vault remove-certificate NAME"
+
+    [ -n "$1" -a "$1" == "help" ] && echo "$DESC" && return 0
+
+    local NAME="$1"
+
+    [ -z "$NAME" ] && echo "$DESC" && return 1
+
+    $VAULT delete "auth/cert/certs/${NAME}"
+}
+
+cert-read() {
+    local DESC="Usage: vault cert-read NAME"
+
+    [ -n "$1" -a "$1" == "help" ] && echo "$DESC" && return 0
+
+    local NAME="$1"
+
+    [ -z "$NAME" ] && echo "$DESC" && return 1
+
+    $VAULT read "auth/cert/certs/${NAME}"
+}
+
+cert-list() {
+    local DESC="Usage: vault cert-list"
+
+    [ -n "$1" -a "$1" == "help" ] && echo "$DESC" && return 0
+
+    $VAULT list "auth/cert/certs"
+}
+
+case $1 in
+    ''|help)
+        help
+        ;;
+    cert-*)
+        $@
+        ;;
+    *)
+        $VAULT $@
+        ;;
+esac
+
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4 fenc=utf-8
