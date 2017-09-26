@@ -1,0 +1,22 @@
+#!/bin/bash
+
+get-branch() {
+  git symbolic-ref -q HEAD | sed 's|refs/heads/||'
+}
+
+is-feature() {
+  local BRANCH="$1"
+  echo "$BRANCH" | grep -q "^features/"
+}
+
+get-feature-id() {
+  local BRANCH="$1"
+  local ABBREV="${BRANCH##*/}"
+  echo "${ABBREV%%_*}"
+}
+
+BRANCH=$(get-branch)
+
+if is-feature "$BRANCH"; then
+  sed -i "1s/^/$(get-feature-id "$BRANCH") /" $1
+fi
