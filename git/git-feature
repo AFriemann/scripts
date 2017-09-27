@@ -3,12 +3,45 @@
 # Usage:
 # ./git-feature PM-1234 "this is an issue description"
 
-ID=$1
-DESC=${@:2}
+get-branch() {
+  git symbolic-ref -q HEAD | sed 's|refs/heads/||'
+}
+get-feature-id() {
+  local BRANCH="$1"
+  local ABBREV="${BRANCH##*/}"
+  echo "${ABBREV%%_*}"
+}
+get-feature-description() {
+  local BRANCH="$1"
+  local ABBREV="${BRANCH##*/}"
+  local DESC="${ABBREV#*_}"
 
-[ -z "$ID" ] && echo "Feature ID is empty" && exit 1
-[ -z "$DESC" ] && echo "Description is empty" && exit 1
+  echo "${DESC/_/ }"
+}
 
-BRANCH=features/"$ID"_"${DESC//[ ]/_}"
+checkout-new-branch() {
+  local ID="$1"
+  local DESC="${@:2}"
+  [ -z "$DESC" ] && echo "Description is empty" && exit 1
 
-git checkout -b "$BRANCH"
+  local BRANCH=features/"$ID"_"${DESC//[ ]/_}"
+
+  git checkout -b "$BRANCH"
+}
+
+print-current-feature() {
+  local BRANCH="$(get-branch)"
+  local ID="$(get-feature-id "$BRANCH")"
+  local DESC="$(get-feature-description "$BRANCH")"
+
+  echo "[$ID]" "$DESC"
+}
+
+case $1 in
+  "")
+    print-current-feature
+    ;;
+  *)
+    checkout-new-branch $@
+    ;;
+esac
