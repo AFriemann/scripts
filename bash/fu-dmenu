@@ -1,0 +1,11 @@
+#!/bin/bash
+
+INPUT="$1"
+ACTION="$2"
+
+xdotool search --onlyvisible --classname fu-dmenu windowunmap \
+  || xdotool search --classname fu-dmenu windowmap \
+  || urxvtc -name fu-dmenu -geometry 120x8 -e bash -c "$INPUT | sort -u | fzf | (nohup $ACTION &>/dev/null &)"
+
+
+
