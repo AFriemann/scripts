@@ -1,4 +1,8 @@
 #!/bin/bash
+#
+# i3 key bindings:
+# - bindsym $mod+d exec fu-dmenu 'compgen -c | grep -v "^_"' 'sh'
+# - bindsym $mod+p exec fu-dmenu 'find ~/.password-store/ -iname "*.gpg" | sed "s/.*\/\.password-store\///" | sed "s/\.gpg$//"' 'pass stdin -c'
 
 INPUT="$1"
 ACTION="$2"
@@ -6,6 +10,4 @@ ACTION="$2"
 xdotool search --onlyvisible --classname fu-dmenu windowunmap \
   || xdotool search --classname fu-dmenu windowmap \
   || urxvtc -name fu-dmenu -geometry 120x8 -e bash -c "$INPUT | sort -u | fzf | (nohup $ACTION &>/dev/null &)"
-
-
 
