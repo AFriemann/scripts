@@ -11,12 +11,16 @@ is-feature() {
 
 get-feature-id() {
   local BRANCH="$1"
-  local ABBREV="${BRANCH##*/}"
-  echo "${ABBREV%%_*}"
+  echo "$BRANCH" | sed 's|^features/\([A-Z0-9]\+-[0-9]\+\)_.*|\1|g'
 }
 
 BRANCH=$(get-branch)
+FEATURE="$(get-feature-id "$BRANCH")"
 
 if is-feature "$BRANCH"; then
-  sed -i "1s/^/$(get-feature-id "$BRANCH") /" $1
+  if ! echo "$1" | grep -q "^$FEATURE"; then
+    sed -i "1s/^/$FEATURE /" $1
+  else
+    echo $1
+  fi
 fi
