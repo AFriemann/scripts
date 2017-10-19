@@ -1,8 +1,10 @@
 #!/bin/bash
 #
 # i3 key bindings:
-# - bindsym $mod+d exec fu-dmenu 'compgen -c | grep -v "^_"' 'sh'
-# - bindsym $mod+p exec fu-dmenu 'find ~/.password-store/ -iname "*.gpg" | sed "s/.*\/\.password-store\///" | sed "s/\.gpg$//"' 'pass stdin -c'
+# - dmenu replacement:
+#       bindsym $mod+d exec fu-dmenu 'find ${PATH//:/ } -maxdepth 1 -executable -printf "%f\n" | grep -v "^\."' 'sh'
+# - passmenu replacement:
+#       bindsym $mod+p exec fu-dmenu 'find ~/.password-store/ -iname "*.gpg" | sed "s/.*\/\.password-store\///" | sed "s/\.gpg$//"' 'pass stdin -c'
 
 INPUT="$1"
 ACTION="$2"
