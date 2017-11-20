@@ -1,0 +1,19 @@
+#!/bin/bash
+
+containers() {
+  docker ps -a | sed "1 d" | grep -v "Up [0-9]\+" | awk -F" " "{ print \$1 }"
+}
+
+unnamed-images() {
+  docker images | grep "^<none>" | awk -F" " "{ print \$3 }"
+}
+
+for container in $(containers); do
+  docker rm "$container"
+done
+
+for image in $(unnamed-images); do
+  docker rmi "$image"
+done
+
+# vim: expandtab tabstop=2 softtabstop=2 shiftwidth=2
