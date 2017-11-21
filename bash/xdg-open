@@ -1,3 +1,15 @@
-#!/bin/sh
+#!/bin/bash
 
-echo $@
+shopt -s extglob
+
+BROWSER=${BROWSER:-firefox}
+
+case "$@" in
+  http?(s)://* )
+    $BROWSER $@
+    ;;
+  *)
+    echo "ERROR: unknown argument $@"
+    exit 1
+    ;;
+esac
