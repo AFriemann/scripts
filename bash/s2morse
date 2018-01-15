@@ -1,0 +1,61 @@
+#!/bin/bash
+
+S="${S:-.}"
+L="${L:--}"
+
+c2morse() {
+  case $1 in
+    a|A) echo "$S$L" ;;
+    b|B) echo "$L$S$S$S" ;;
+    c|C) echo "$L$S$L$S" ;;
+    d|D) echo "$L$S$S" ;;
+    e|E) echo "$S" ;;
+    f|F) echo "$S$S$L$S" ;;
+    g|G) echo "$L$L$S" ;;
+    h|H) echo "$S$S$S$S" ;;
+    i|I) echo "$S$S" ;;
+    j|J) echo "$S$L$L$L" ;;
+    k|K) echo "$L$S$L" ;;
+    l|L) echo "$S$L$S$S" ;;
+    m|M) echo "$L$L" ;;
+    n|N) echo "$L$S" ;;
+    o|O) echo "$L$L$L" ;;
+    p|P) echo "$S$L$L$S" ;;
+    q|Q) echo "$L$L$S$L" ;;
+    r|R) echo "$S$L$S" ;;
+    s|S) echo "$S$S$S" ;;
+    t|T) echo "$L" ;;
+    u|U) echo "$S$S$L" ;;
+    v|V) echo "$S$S$S$L" ;;
+    w|W) echo "$S$L$L" ;;
+    x|X) echo "$L$S$S$L" ;;
+    y|Y) echo "$L$S$L$L" ;;
+    z|Z) echo "$L$L$S$S" ;;
+    1)   echo "$S$L$L$L$L" ;;
+    2)   echo "$S$S$L$L$L" ;;
+    3)   echo "$S$S$S$L$L" ;;
+    4)   echo "$S$S$S$S$L" ;;
+    5)   echo "$S$S$S$S$S" ;;
+    6)   echo "$L$S$S$S$S" ;;
+    7)   echo "$L$L$S$S$S" ;;
+    8)   echo "$L$L$L$S$S" ;;
+    9)   echo "$L$L$L$L$S" ;;
+    0)   echo "$L$L$L$L$L" ;;
+    *) echo "Invalid character: $1" && exit 1 ;;
+  esac
+}
+
+translate() {
+  while read -n1 character; do
+    echo -n "$(c2morse $character) "
+  done < <(echo -n "$1")
+}
+
+read input
+
+for word in $input; do
+  [ -n "$translation" ] && echo -n "/ "
+  translation=$(translate "$word")
+  echo -n "${translation}"
+done
+
