@@ -1,0 +1,31 @@
+#!/bin/bash
+
+help() {
+  echo "exd on|off"
+}
+
+connected-displays() {
+  xrandr | grep " connected" | awk -F' ' '{ print $1 }'
+}
+
+on() {
+  for display in $(connected-displays); do
+    case $display in
+      DP1)
+        xrandr --output "$display" --mode 1920x1080 --above eDP1
+        ;;
+    esac
+  done
+}
+
+off() {
+  for display in $(connected-displays); do
+    case $display in
+      DP1)
+        xrandr --output "$display" --off
+        ;;
+    esac
+  done
+}
+
+$@
