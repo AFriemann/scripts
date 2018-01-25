@@ -11,6 +11,9 @@ connected-displays() {
 on() {
   for display in $(connected-displays); do
     case $display in
+      eDP1)
+        xrandr --output "$display" --primary
+        ;;
       DP1)
         xrandr --output "$display" --mode 1920x1080 --above eDP1
         ;;
