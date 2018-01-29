@@ -1,0 +1,61 @@
+#!/bin/bash
+
+S="${S:-.}"
+L="${L:--}"
+
+c2morse() {
+  case $1 in
+    $S$L)         echo "a" ;;
+    $L$S$S$S)     echo "b" ;;
+    $L$S$L$S)     echo "c" ;;
+    $L$S$S)       echo "d" ;;
+    $S)           echo "e" ;;
+    $S$S$L$S)     echo "f" ;;
+    $L$L$S)       echo "g" ;;
+    $S$S$S$S)     echo "h" ;;
+    $S$S)         echo "i" ;;
+    $S$L$L$L)     echo "j" ;;
+    $L$S$L)       echo "k" ;;
+    $S$L$S$S)     echo "l" ;;
+    $L$L)         echo "m" ;;
+    $L$S)         echo "n" ;;
+    $L$L$L)       echo "o" ;;
+    $S$L$L$S)     echo "p" ;;
+    $L$L$S$L)     echo "q" ;;
+    $S$L$S)       echo "r" ;;
+    $S$S$S)       echo "s" ;;
+    $L)           echo "t" ;;
+    $S$S$L)       echo "u" ;;
+    $S$S$S$L)     echo "v" ;;
+    $S$L$L)       echo "w" ;;
+    $L$S$S$L)     echo "x" ;;
+    $L$S$L$L)     echo "y" ;;
+    $L$L$S$S)     echo "z" ;;
+    $S$L$L$L$L)   echo "1" ;;
+    $S$S$L$L$L)   echo "2" ;;
+    $S$S$S$L$L)   echo "3" ;;
+    $S$S$S$S$L)   echo "4" ;;
+    $S$S$S$S$S)   echo "5" ;;
+    $L$S$S$S$S)   echo "6" ;;
+    $L$L$S$S$S)   echo "7" ;;
+    $L$L$L$S$S)   echo "8" ;;
+    $L$L$L$L$S)   echo "9" ;;
+    $L$L$L$L$L)   echo "0" ;;
+    $S$L$S$L$S$L) echo "." ;;
+    $L$L$S$S$L$L) echo "," ;;
+    $S$S$L$L$S$S) echo "?" ;;
+    *) echo "" ;;
+  esac
+}
+
+translate() {
+  while read -d' ' character || [ -n "$character" ]; do
+    echo -n "$(c2morse $character)"
+  done < <(echo "$1")
+}
+
+while read -d'/' word || [ -n "$word" ]; do
+  [ -n "$translation" ] && echo -n " "
+  translation="$(translate "$word")"
+  echo -n "$translation"
+done

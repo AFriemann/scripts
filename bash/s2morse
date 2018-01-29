@@ -41,21 +41,21 @@ c2morse() {
     8)   echo "$L$L$L$S$S" ;;
     9)   echo "$L$L$L$L$S" ;;
     0)   echo "$L$L$L$L$L" ;;
-    *) echo "Invalid character: $1" && exit 1 ;;
+    .)   echo "$S$L$S$L$S$L" ;;
+    ,)   echo "$L$L$S$S$L$L" ;;
+    ?)   echo "$S$S$L$L$S$S" ;;
+    *) echo "?" ;;
   esac
 }
 
 translate() {
-  while read -n1 character; do
+  while read -n1 character || [ -n "$character" ]; do
     echo -n "$(c2morse $character) "
   done < <(echo -n "$1")
 }
 
-read input
-
-for word in $input; do
+while read -d' ' word || [ -n "$word" ]; do
   [ -n "$translation" ] && echo -n "/ "
-  translation=$(translate "$word")
-  echo -n "${translation}"
+  translation="$(translate "$word")"
+  echo -n "$translation"
 done
-
