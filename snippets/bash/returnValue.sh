@@ -1,14 +1,14 @@
 #!/bin/sh
 
-function returnsOne {
-  return 1 
+returnsOne () {
+  return 1
 }
 
-function returnsZero {
+returnsZero () {
   return 0
 }
 
-function main {
+main () {
   if returnsOne; then
     echo "1 is false"
   fi
