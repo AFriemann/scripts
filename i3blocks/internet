@@ -1,0 +1,23 @@
+#!/bin/bash
+
+TIMEOUT="${BLOCK_TIMEOUT:-2}"
+TARGET="${BLOCK_TARGET:-8.8.8.8}"
+
+ROUTES=$(ip route)
+
+STATUS=offline
+
+if [ -n "$ROUTES" ]; then
+  if ping -c1 -W"$TIMEOUT" "$TARGET" &>/dev/null; then
+    STATUS=online
+  fi
+fi
+
+echo "$STATUS" # full text
+echo "$STATUS" # short text
+
+# color
+case $STATUS in
+  online) echo "#00FF00" ;;
+  offline) echo "#FF0000" ;;
+esac
