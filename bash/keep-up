@@ -1,0 +1,5 @@
+#!/bin/bash
+
+while sleep 120; do
+  grep -q RUNNING /proc/asound/card*/pcm*/sub*/status && xscreensaver-command -deactivate
+done
