@@ -1,0 +1,8 @@
+#!/bin/sh
+
+mount /boot
+
+grub-mkconfig -o /boot/grub/grub.cfg
+grub-install --efi-directory=/boot
+
+sed -i 's/^\tinitrd\t\(.*\)/\tinitrd\t\/acpi_override \1/' /boot/grub/grub.cfg

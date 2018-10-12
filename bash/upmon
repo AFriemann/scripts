@@ -1,0 +1,17 @@
+#!/bin/bash
+
+URLS=($@)
+
+check() {
+  curl -s "$1" &>/dev/null
+  echo "$1: $?"
+}
+
+while true; do
+  for URL in $@; do
+    check "$URL"
+  done
+
+  wait
+  sleep 1
+done

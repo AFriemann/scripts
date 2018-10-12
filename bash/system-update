@@ -1,0 +1,19 @@
+#!/bin/bash
+
+[ $EUID -ne 0 ] && exit "Needs root to run"
+
+eix-sync
+
+eselect news read
+
+emerge -avuDN --with-bdeps y $@ @world || exit 1
+
+etc-update || exit 1
+
+lafilefixer --justfixit || exit 1
+
+emerge -av --depclean || exit 1
+
+revdep-rebuild || exit 1
+
+eclean -d distfiles || exit 1

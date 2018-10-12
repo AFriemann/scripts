@@ -1,0 +1,9 @@
+#!/bin/sh
+
+mount /boot
+
+genkernel --install all
+
+grub-update
+
+umount /boot

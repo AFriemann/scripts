@@ -1,0 +1,26 @@
+#!/bin/sh
+
+help() {
+  echo "usage: $0 KEY CERTIFICATE"
+}
+
+case "$1" in
+  -h|--help)
+    help && exit
+  ;;
+esac
+
+KEY=$1
+CRT=$2
+
+: ${KEY:?}
+: ${CRT:?}
+
+KEY_MD5="$(openssl rsa -noout -modulus -in "$KEY" | openssl md5)"
+CRT_MD5="$(openssl x509 -noout -modulus -in "$CRT" | openssl md5)"
+
+if [ "$KEY_MD5" != "$CRT_MD5" ]; then
+  echo "No match: $KEY_MD5 != $CRT_MD5" && exit 1
+else
+  echo "$KEY and $CRT match!"
+fi

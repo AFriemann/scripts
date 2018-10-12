@@ -1,0 +1,24 @@
+#!/bin/bash
+
+for session in $(tmux ls -F '#{session_name};#{window_activity};#{session_attached}' | grep -v ";1$" | sed 's/;[01]$//'); do
+  name=${session%%;*}
+
+  case "$name" in
+    keep*)
+      echo "ignoring session marked for keeping: $name"
+      ;;
+    *)
+      now=$(date +%s)
+
+      idle_since=${session##*;}
+      idle_time=$((now - idle_since))
+
+      if [[ $idle_time -gt 600 ]]; then
+        echo "removing idle session: $name (${idle_time}s)"
+        tmux kill-session -t "$name"
+      else
+        echo "keeping session for now: $name (${idle_time}s)"
+      fi
+      ;;
+  esac
+done

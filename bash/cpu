@@ -1,0 +1,33 @@
+#!/bin/bash
+
+CP_OPTS=
+CP_ARGS=
+
+help() {
+  echo "$0 [OPTIONS]"
+  echo "-h, --help	this message"
+  echo "--user=USER	user for chown command"
+  echo "--group=GROUP	group for chown command (default is USER)"
+  echo
+  echo "All other options are forwarded to cp"
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -h|--help) help && exit 0 ;;
+    --user=*) user="${1#*=}"; shift 1;;
+    --group=*) group="${1#*=}"; shift 1;;
+    -*) CP_OPTS="${CP_OPTS} $1"; shift 1;;
+    *) CP_ARGS="${CP_ARGS} $1"; shift 1;;
+  esac
+done
+
+target="${CP_ARGS##* }"
+
+cp -i $CP_OPTS $CP_ARGS
+
+if [ -f "$target" ]; then
+  chown "$user:${group:-$user}" "$target"
+fi
+
+#
