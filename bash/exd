@@ -1,39 +1,102 @@
 #!/bin/bash
 
-PRIMARY="${PRIMARY:-eDP1}"
+PRIMARY="${PRIMARY:-$( xrandr  | grep primary | awk '{ print $1 }' )}"
 
 help() {
   echo "exd on|off"
 }
 
 connected-displays() {
-  xrandr | grep " connected" | awk -F' ' '{ print $1 }'
+  xrandr | grep " connected" | awk '{ print $1 }'
 }
 
-on() {
+get-display() {
+  xrandr | grep "^$1"
+}
+
+is-active() {
+  # eDP1 connected primary 2560x1440+0+0 (normal left inverted right x axis y axis) 310mm x 170mm
+  # HDMI1 connected (normal left inverted right x axis y axis)
+  local WORDS=$(get-display "$1" | wc -w)
+
+  [[ $WORDS -gt 10 ]]
+}
+
+active-displays() {
+  for display in $(connected-displays); do
+    if is-active $display; then
+      echo "$display"
+    fi
+  done
+}
+
+mode() {
+  if is-active "$1"; then
+    get-display "$1" | awk '{ print $4 }'
+  fi
+}
+
+single-lo() {
+  echo "turning $1 on left of $PRIMARY"
+  xrandr --output "$1" --auto --left-of "$PRIMARY"
+}
+
+single-ro() {
+  echo "turning $1 on right of $PRIMARY"
+  xrandr --output "$1" --auto --right-of "$PRIMARY"
+}
+
+single-off() {
+  echo "turning $1 off"
+  xrandr --output "$1" --off
+}
+
+lo() {
   for display in $(connected-displays); do
     case $display in
-      "$PRIMARY")
-        echo "setting $display as primary"
-        xrandr --output "$display" --primary
-        ;;
-      DP1)
-        echo "turning $display on above $PRIMARY"
-        xrandr --output "$display" --mode 1920x1080 --above eDP1
+      "$PRIMARY") continue ;;
+      *) single-lo $display ;;
+    esac
+  done
+}
+
+ro() {
+  for display in $(connected-displays); do
+    case $display in
+      "$PRIMARY") continue ;;
+      *) single-ro "$display" ;;
+    esac
+  done
+}
+
+toggle() {
+  for display in $(connected-displays); do
+    case $display in
+      "$PRIMARY") continue ;;
+      *)
+        if is-active $display; then
+          single-off "$display"
+        else
+          single-lo "$display"
+        fi
         ;;
     esac
   done
 }
+
+on() { lo; }
 
 off() {
   for display in $(connected-displays); do
     case $display in
-      DP1)
-        echo "turning $display off"
-        xrandr --output "$display" --off
-        ;;
+      "$PRIMARY") echo "keeping $PRIMARY" ;;
+      *) single-off "$display" ;;
     esac
   done
 }
 
-$@
+if [[ -z "$@" ]]; then
+  toggle
+else
+  $@
+fi
