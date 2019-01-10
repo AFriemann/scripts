@@ -2,15 +2,29 @@
 
 [ $EUID -ne 0 ] && exit "Needs root to run"
 
-eix-sync
+confirm() {
+  local ANSWER
+  echo "$1" && read -r ANSWER
+
+  case $ANSWER in
+    y|Y|yes|Yes|YES)
+      return 0 ;;
+    *)
+      return 1 ;;
+  esac
+}
+
+eix-sync -w && eix-sync && eix-update
 
 eselect news read
 
-emerge -avuDN --with-bdeps y $@ @world || exit 1
+echo && confirm "continue? y/[n] " || exit 2
+
+emerge -avuDN --with-bdeps y @world || exit 1
 
 etc-update || exit 1
 
-lafilefixer --justfixit || exit 1
+[ -x "$(command -v lafilefixer)" ] && lafilefixer --justfixit || exit 1
 
 emerge -av --depclean || exit 1
 

@@ -1,0 +1,52 @@
+#! /bin/sh
+#
+# ckctx.sh
+# Copyright (C) 2019 Aljosha Friemann <a.friemann@automate.wtf>
+#
+# Distributed under terms of the 3-clause BSD license.
+#
+
+_BASH_COMP() {
+  printf '%s\n'\
+    '_kube_contexts() {' \
+    '  curr_arg=${COMP_WORDS[COMP_CWORD]}' \
+    '  COMPREPLY=( $(compgen -W "$(ckctx --list)" -- $curr_arg ) );' \
+    '}' \
+    'complete -F _kube_contexts ckctx'
+}
+
+help() {
+  echo "usage: $0 CONTEXT"
+}
+
+for arg in $@; do
+  case $arg in
+    -l|--list)
+      find ~/.kube/ -iname "*.config" | sed 's|^/.*/\.kube/\(.\+\)\.config$|\1|'
+      exit 0
+      ;;
+    -h|--help)
+      help && exit 0
+      ;;
+    -c|--current)
+      [ -z "$KUBECONFIG" ] && exit 1
+
+      echo "$KUBECONFIG" | sed 's|^/.*/\.kube/\(.\+\)\.config$|\1|' && exit 0
+      ;;
+    --bash-completion)
+      _BASH_COMP && exit 0
+      ;;
+  esac
+done
+
+CTX=$1
+
+[ -z "$CTX" ] && help && exit 1
+
+KUBECONFIG=~/.kube/"$CTX".config
+
+[ ! -r "$KUBECONFIG" ] && echo "No such file: $KUBECONFIG" && exit 1
+
+export KUBECONFIG="$KUBECONFIG"
+
+exec $SHELL

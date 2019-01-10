@@ -1,0 +1,44 @@
+#!/bin/sh
+
+output() { echo -e "`date`: $@"; }
+
+red() { output "\033[0;31m$@\033[0m"; }
+green() { output "\033[0;32m$@\033[0m"; }
+yellow() { output "\033[0;33m$@\033[0m"; }
+
+info() { output "$@"; }
+warning() { yellow "$@"; }
+error() { red "$@"; }
+success() { green "$@"; }
+fatal() { red "$@" && exit 1; }
+
+check_root() { [ $EUID -ne 0 ] && fatal "Needs root to run"; }
+
+cmd=$1; shift
+
+case $cmd in
+  search)
+    eix search $@;;
+  update) check_root
+    eix-sync && eix-update;;
+  upgrade) check_root
+    eselect news read
+
+    emerge -avuDN --with-bdeps y $@ @world || fatal "updating packages failed!"
+
+    etc-update || fatal "failed to update config files"
+
+    lafilefixer --justfixit || fatal "failed latex update"
+
+    emerge -av --depclean || error "failed cleaning unused dependencies"
+
+    revdep-rebuild || fatal "failed rebuilding reverse dependencies"
+
+    eclean -d distfiles || fatal "failed cleaning distfiles"
+    ;;
+  install) check_root
+    emerge install $@
+    ;;
+  rebuild-world) check_root
+    emerge -ave system && emerge -ave system && emerge -ave world;;
+esac
