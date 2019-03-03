@@ -1,0 +1,94 @@
+#! /bin/bash
+#
+# snap.bash
+# Copyright (C) 2019 Aljosha Friemann <a.friemann@automate.wtf>
+#
+# Distributed under terms of the 3-clause BSD license.
+#
+
+_BASH_COMP() {
+  printf '%s\n' \
+    '_snap() {' \
+    '  local current_word=${COMP_WORDS[COMP_CWORD]}' \
+    '  local previous_word=${COMP_WORDS[COMP_CWORD - 1]}' \
+    '  local commands="list store restore drop completion"' \
+    '' \
+    '  case $previous_word in' \
+    '  list|completion) ;;' \
+    '  restore|drop)' \
+    '    COMPREPLY=( $(compgen -W "$(snap list)" -- $current_word ) )' \
+    '    ;;' \
+    '  *)' \
+    '    COMPREPLY=( $(compgen -fdW "$commands" -- $current_word ) )' \
+    '    ;;' \
+    '  esac' \
+    '}' \
+    'complete -o default -F _snap snap'
+}
+
+help() {
+  echo "$0 [COMMAND]"
+  echo "commands:"
+  echo "  list"
+  echo "  restore FILE TARGET"
+  echo "  store   FILE"
+  echo "  drop    FILE"
+  echo "  completion"
+}
+
+SNAP_DIR="${SNAP_DIR:-${HOME}/.local/snap}"
+
+prepare() {
+  mkdir -p "$SNAP_DIR"
+}
+
+check-exists() {
+  test -r "$1"
+}
+
+drop-file() {
+  local NAME="$1"
+  local FILE="${SNAP_DIR}/${NAME}"
+
+  check-exists "$FILE" && rm -rf "$FILE"
+}
+
+store-file() {
+  local SOURCE="$1"
+  local DEST="${SNAP_DIR}/$(basename "$SOURCE")"
+
+  check-exists "$DEST" && { echo "file already exists: $DEST" && return 1; }
+
+  cp -pr "$(readlink -f "$SOURCE")" "$DEST"
+}
+
+restore-file() {
+  local NAME="$1"
+  local DEST="$2"
+  local SOURCE="${SNAP_DIR}/${NAME}"
+
+  check-exists "$SOURCE" || { echo "no such file or directory: $SOURCE" && return 1; }
+  check-exists "$DEST" && { echo "file already exists: $DEST" && return 1; }
+
+  cp -pr "$SOURCE" "$DEST"
+}
+
+list-files() {
+  for file in $(find "$SNAP_DIR/" | grep -v "^$HOME/.local/snap/$"); do
+    echo "$file"
+  done
+}
+
+prepare || { echo "failed to create $SNAP_DIR" && exit 1; }
+
+case $1 in
+list) list-files ;;
+
+store) store-file "$2" "$3" ;;
+
+restore) restore-file "$2" "$3" ;;
+
+completion) _BASH_COMP ;;
+
+*) help && exit 1 ;;
+esac

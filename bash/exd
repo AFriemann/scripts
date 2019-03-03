@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PRIMARY="${PRIMARY:-$( xrandr  | grep primary | awk '{ print $1 }' )}"
+PRIMARY="${PRIMARY:-$(xrandr | grep primary | awk '{ print $1 }')}"
 
 help() {
   echo "exd on|off"
@@ -36,6 +36,10 @@ mode() {
   fi
 }
 
+single-on() {
+  xrandr --output "$1" --auto
+}
+
 single-lo() {
   echo "turning $1 on left of $PRIMARY"
   xrandr --output "$1" --auto --left-of "$PRIMARY"
@@ -54,8 +58,8 @@ single-off() {
 lo() {
   for display in $(connected-displays); do
     case $display in
-      "$PRIMARY") continue ;;
-      *) single-lo $display ;;
+    "$PRIMARY") continue ;;
+    *) single-lo $display ;;
     esac
   done
 }
@@ -63,8 +67,8 @@ lo() {
 ro() {
   for display in $(connected-displays); do
     case $display in
-      "$PRIMARY") continue ;;
-      *) single-ro "$display" ;;
+    "$PRIMARY") continue ;;
+    *) single-ro "$display" ;;
     esac
   done
 }
@@ -72,14 +76,23 @@ ro() {
 toggle() {
   for display in $(connected-displays); do
     case $display in
-      "$PRIMARY") continue ;;
-      *)
-        if is-active $display; then
-          single-off "$display"
-        else
-          single-lo "$display"
-        fi
-        ;;
+    "$PRIMARY") continue ;;
+    *)
+      if is-active $display; then
+        single-off "$display"
+      else
+        single-lo "$display"
+      fi
+      ;;
+    esac
+  done
+}
+
+single() {
+  for display in $(connected-displays); do
+    case $display in
+    "$PRIMARY") single-off "$display" ;;
+    *) single-on "$display" ;;
     esac
   done
 }
@@ -89,8 +102,8 @@ on() { lo; }
 off() {
   for display in $(connected-displays); do
     case $display in
-      "$PRIMARY") echo "keeping $PRIMARY" ;;
-      *) single-off "$display" ;;
+    "$PRIMARY") single-on "$display" ;;
+    *) single-off "$display" ;;
     esac
   done
 }

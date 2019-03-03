@@ -47,6 +47,6 @@ KUBECONFIG=~/.kube/"$CTX".config
 
 [ ! -r "$KUBECONFIG" ] && echo "No such file: $KUBECONFIG" && exit 1
 
-export KUBECONFIG="$KUBECONFIG"
+KUBECONFIG="$KUBECONFIG" exec $SHELL
 
-exec $SHELL
+#

@@ -2,3 +2,7 @@ src/*/build/*
 src/*/bin/*
 *.hi
 *.o
+*.pyc
+
+.mypy_cache
+__pycache__

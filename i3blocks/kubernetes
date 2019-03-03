@@ -1,0 +1,15 @@
+#!/bin/bash
+
+CONTEXT="$(kubectl config current-context 2>/dev/null)"
+
+if [ -n "$CONTEXT" ]; then
+  NAMESPACE="$(kubectl config view -o json | jq ".contexts[] | select(.name == \"$(kubectl config view -o json | jq -r '."current-context"')\").context.namespace" -r)"
+
+  echo "$CONTEXT:$NAMESPACE" # full text
+  echo "$CONTEXT"            # short text
+  echo "#00FF00"
+else
+  echo "k8s"
+  echo "k8s"
+  echo "#FF0000"
+fi

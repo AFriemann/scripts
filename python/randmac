@@ -1,0 +1,14 @@
+#!/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# Copyright © 2019 Aljosha Friemann <a.friemann@automate.wtf>
+#
+# Distributed under terms of the 3-clause BSD license.
+
+import random
+
+
+if __name__ == "__main__":
+    print(":".join("%02x" % random.randint(0, 255) for _ in range(6)))
+
+# vim: fenc=utf-8:ts=4:sw=4:expandtab
