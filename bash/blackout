@@ -1,10 +1,4 @@
 #! /bin/bash
-#
-# blackout.sh
-# Copyright (C) 2019 Aljosha Friemann <a.friemann@automate.wtf>
-#
-# Distributed under terms of the 3-clause BSD license.
-#
 
 output() { echo -e "${TIMESTAMP:+[$(date -Iseconds)] }$0: $@"; }
 

@@ -1,13 +1,7 @@
 #! /bin/sh
-#
-# ckctx.sh
-# Copyright (C) 2019 Aljosha Friemann <a.friemann@automate.wtf>
-#
-# Distributed under terms of the 3-clause BSD license.
-#
 
 _BASH_COMP() {
-  printf '%s\n'\
+  printf '%s\n' \
     '_kube_contexts() {' \
     '  curr_arg=${COMP_WORDS[COMP_CWORD]}' \
     '  COMPREPLY=( $(compgen -W "$(ckctx --list)" -- $curr_arg ) );' \
@@ -21,21 +15,21 @@ help() {
 
 for arg in $@; do
   case $arg in
-    -l|--list)
-      find ~/.kube/ -iname "*.config" | sed 's|^/.*/\.kube/\(.\+\)\.config$|\1|'
-      exit 0
-      ;;
-    -h|--help)
-      help && exit 0
-      ;;
-    -c|--current)
-      [ -z "$KUBECONFIG" ] && exit 1
+  -l | --list)
+    find ~/.kube/ -iname "*.config" | sed 's|^/.*/\.kube/\(.\+\)\.config$|\1|'
+    exit 0
+    ;;
+  -h | --help)
+    help && exit 0
+    ;;
+  -c | --current)
+    [ -z "$KUBECONFIG" ] && exit 1
 
-      echo "$KUBECONFIG" | sed 's|^/.*/\.kube/\(.\+\)\.config$|\1|' && exit 0
-      ;;
-    --bash-completion)
-      _BASH_COMP && exit 0
-      ;;
+    echo "$KUBECONFIG" | sed 's|^/.*/\.kube/\(.\+\)\.config$|\1|' && exit 0
+    ;;
+  --bash-completion)
+    _BASH_COMP && exit 0
+    ;;
   esac
 done
 

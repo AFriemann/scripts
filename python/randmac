@@ -1,9 +1,5 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*-
-#
-# Copyright © 2019 Aljosha Friemann <a.friemann@automate.wtf>
-#
-# Distributed under terms of the 3-clause BSD license.
 
 import random
 

@@ -1,56 +1,50 @@
 #! /bin/sh
-#
-# awscp.sh
-# Copyright (C) 2019 Aljosha Friemann <a.friemann@automate.wtf>
-#
-# Distributed under terms of the 3-clause BSD license.
-#
 
 set -E -o pipefail
 IFS=$'\n\t'
 
 _BASH_COMP() {
-  printf '%s\n'\
-    '_aws_contexts() {' \
-    '  curr_arg=${COMP_WORDS[COMP_CWORD]}' \
-    '  COMPREPLY=( $(compgen -W "$(cawsctx --list)" -- $curr_arg ) );' \
-    '}' \
-    'complete -F _aws_contexts cawsctx'
+    printf '%s\n' \
+        '_aws_contexts() {' \
+        '  curr_arg=${COMP_WORDS[COMP_CWORD]}' \
+        '  COMPREPLY=( $(compgen -W "$(cawsctx --list)" -- $curr_arg ) );' \
+        '}' \
+        'complete -F _aws_contexts cawsctx'
 }
 
-PROFILES="$(cat "${HOME}"/.aws/config  | grep '^\[profile \(.\+\)\]$' -o | sed 's/^\[profile \(.\+\)\]$/\1/')"
+PROFILES="$(cat "${HOME}"/.aws/config | grep '^\[profile \(.\+\)\]$' -o | sed 's/^\[profile \(.\+\)\]$/\1/')"
 
 list() {
     echo "$PROFILES"
 }
 
 help() {
-  echo "usage: $0 CONTEXT"
-  echo
-  echo "profiles:"
+    echo "usage: $0 CONTEXT"
+    echo
+    echo "profiles:"
 
-  for P in $PROFILES; do
-      echo -e "\t$P"
-  done
+    for P in $PROFILES; do
+        echo -e "\t$P"
+    done
 }
 
 for arg in $@; do
-  case $arg in
-    -l|--list)
-      list && exit 0
-      ;;
-    -h|--help)
-      help && exit 0
-      ;;
-    -c|--current)
-      [ -z "$AWS_PROFILE" ] && exit 1
+    case $arg in
+    -l | --list)
+        list && exit 0
+        ;;
+    -h | --help)
+        help && exit 0
+        ;;
+    -c | --current)
+        [ -z "$AWS_PROFILE" ] && exit 1
 
-      echo "$AWS_PROFILE" && exit 0
-      ;;
+        echo "$AWS_PROFILE" && exit 0
+        ;;
     --bash-completion)
-      _BASH_COMP && exit 0
-      ;;
-  esac
+        _BASH_COMP && exit 0
+        ;;
+    esac
 done
 
 test -z "$1" && help && exit 1
