@@ -1,0 +1,27 @@
+#!/bin/bash
+
+KEY_PATH="${HOME}/.bw_session"
+
+check() {
+  bw login --check &>/dev/null
+}
+
+login() {
+  if test -z "$BW_USER"; then
+    notify-send "ERROR" "BW_USER environment variable is not set"
+  fi
+
+  echo "logging in"
+
+  x11-ssh-askpass "bitwarden (${BW_USER})" | bw login "${BW_USER}" --raw 1> "$KEY_PATH"
+}
+
+[ -f "$KEY_PATH" ] || touch "$KEY_PATH"
+
+while true; do
+  BW_SESSION="$(<$KEY_PATH)"
+
+  check || unlock
+
+  sleep 10
+done

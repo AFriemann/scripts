@@ -1,0 +1,15 @@
+#!/bin/bash
+
+: ${1:?}
+
+readonly RESULT="$(aws sts assume-role --role-arn "$1" --role-session-name "$USER" | jq -r '.Credentials')"
+
+get-value() {
+  readonly local key="$1"
+
+  echo "$RESULT" | jq -r ".$key"
+}
+
+echo "export AWS_ACCESS_KEY_ID='$(get-value AccessKeyId)'"
+echo "export AWS_SECRET_ACCESS_KEY='$(get-value SecretAccessKey)'"
+echo "export AWS_SESSION_TOKEN='$(get-value SessionToken)'"

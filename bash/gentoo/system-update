@@ -2,32 +2,49 @@
 
 [ $EUID -ne 0 ] && exit "Needs root to run"
 
+error() { echo "$@" && exit 1; }
+info() { echo && echo ".. $@ .."; }
+
 confirm() {
   local ANSWER
-  echo "$1" && read -r ANSWER
+  printf "$1 [y]/n " && read -r ANSWER
 
   case $ANSWER in
-    y|Y|yes|Yes|YES)
-      return 0 ;;
-    *)
+    n|N|no|No|NO)
       return 1 ;;
+    *)
+      return 0 ;;
   esac
 }
 
-eix-sync -w && eix-sync && eix-update
+eix-sync
 
 eselect news read
 
-echo && confirm "continue? y/[n] " || exit 2
+echo && confirm "continue?" || exit 1
 
-emerge -avuDN --with-bdeps y @world || exit 1
+info "running package update"
 
-etc-update || exit 1
+emerge -avuDN --with-bdeps y @world || error "package update failed"
 
-[ -x "$(command -v lafilefixer)" ] && lafilefixer --justfixit || exit 1
+# info "running etc-update"
+#
+# etc-update || error "etc-update failed"
 
-emerge -av --depclean || exit 1
+if command -v lafilefixer; then
+  info "running lafilefixer"
 
-revdep-rebuild || exit 1
+  lafilefixer --justfixit || error "lafilefixer failed"
+fi
 
-eclean -d distfiles || exit 1
+info "running depclean"
+
+emerge -av --depclean || error "depclean failed"
+
+info "running revdep-rebuild"
+
+revdep-rebuild || error "revdep-rebuild failed"
+
+info "running eclean"
+
+eclean -d distfiles || error "eclean failed"

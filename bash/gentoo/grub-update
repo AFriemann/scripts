@@ -1,0 +1,7 @@
+#!/bin/sh
+
+mount /boot
+mount -o remount,rw /sys/firmware/efi/efivars
+
+grub-mkconfig -o /boot/grub/grub.cfg
+grub-install --efi-directory=/boot

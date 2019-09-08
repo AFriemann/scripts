@@ -16,4 +16,6 @@ warning() { yellow "$@"; }
 error() { red "$@"; }
 success() { green "$@"; }
 
+abort() { error "$@" && exit 1; }
+
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4 fenc=utf-8

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+pid="$(pgrep -t "tty1" xinit)"
+
+[ -z "$pid" ] && echo "no xinit process found" && exit 1
+
+pid="$(pgrep -n -P "$pid")"
+
+import_environment() {
+        (( pid )) && for var; do
+                IFS='=' read key val < <(egrep -z "$var" /proc/$pid/environ)
+
+                printf -v "$key" %s "$val"
+                [[ ${!key} ]] && echo "export $key=$val"
+        done
+}
+
+import_environment XAUTHORITY USER DISPLAY

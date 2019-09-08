@@ -1,6 +1,9 @@
 #!/bin/sh
 
+[ $EUID -ne 0 ] && exit "Needs root to run"
+
 mount /boot
+mount -o remount,rw /sys/firmware/efi/efivars
 
 genkernel --install all
 

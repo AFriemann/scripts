@@ -1,0 +1,11 @@
+#!/bin/sh
+
+[ "$EUID" -ne 0 ] && echo "needs root!" && exit 1
+
+# log asynchronously on exit
+trap "kill -USR2 $(cat /var/run/metalog.pid)" SIGINT SIGTERM
+
+# log synchronously
+kill -USR1 $(cat /var/run/metalog.pid)
+
+tail -f /var/log/everything/current

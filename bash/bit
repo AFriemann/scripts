@@ -1,0 +1,28 @@
+#! /bin/sh
+#
+# bit.sh
+# Copyright (C) 2019 Aljosha Friemann <a.friemann@automate.wtf>
+#
+# Distributed under terms of the 3-clause BSD license.
+#
+
+set -Eu -o pipefail
+IFS=$'\n\t'
+
+BW_PATH="$(readlink -f ~/.yarn/bin/bw)"
+
+_handle_error() {
+    echo "-ERROR-"
+}
+
+trap _handle_error ERR
+
+if test -z "$BW_SECRET"; then
+    swaynag -t error -m "BW_SECRET environment variable not set"
+    exit 1
+fi
+
+BW_SESSION="${BW_SESSION:-$(gopass "$BW_SECRET" | "$BW_PATH" unlock --raw 2>/dev/null)}" \
+    "$BW_PATH" $@
+
+# vim: fenc=utf-8:ts=4:sw=4:expandtab

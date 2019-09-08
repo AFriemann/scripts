@@ -1,0 +1,16 @@
+#!/bin/sh
+
+TIMEOUT="${BLOCK_TIMEOUT:-2}"
+TARGET="${BLOCK_TARGET:-8.8.8.8}"
+
+ROUTES="$(ip route "${TARGET}/32")"
+
+STATUS=offline
+
+if [ -n "$ROUTES" ]; then
+  if ping -c1 -W"$TIMEOUT" "$TARGET" &>/dev/null; then
+    STATUS=online
+  fi
+fi
+
+echo -n "$STATUS"
