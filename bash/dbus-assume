@@ -1,0 +1,26 @@
+#!/bin/bash
+
+PID=$(pgrep dbus-launch)
+
+import_environment() {
+  (( PID )) && for var; do
+    IFS='=' read key val < <(egrep -z "^$var" /proc/$PID/environ)
+
+    printf -v "$key" %s "$val"
+    [[ ${!key} ]] && echo "export $key=$val"
+  done
+}
+
+#echo export USER=$(ps -o user --no-headers $PID)
+#echo export HOME="$(eval echo ~"$(logname)")"
+#echo export XAUTHORITY="$HOME/.Xauthority"
+# for x in /tmp/.X11-unix/*; do
+#   displaynum="$(echo $x | sed s#/tmp/.X11-unix/X##)"
+#   if [ x"$XAUTHORITY" != x"" ]; then
+#     echo export DISPLAY=":$displaynum"
+#   fi
+# done
+
+
+import_environment XAUTHORITY HOME USER DISPLAY XDG_RUNTIME_DIR
+

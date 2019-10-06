@@ -1,0 +1,37 @@
+#!/bin/sh
+
+CLIP=
+
+case $XDG_SESSION_TYPE in
+  wayland)
+    CLIP="wl-copy --paste-once"
+    ;;
+  *)
+    CLIP="xclip -sel clip"
+    ;;
+esac
+
+ITEMS=$(bit list items | jq -r '.[] | select(.login.totp != null)')
+
+
+get_item() {
+  echo "$ITEMS" | jq -r '.name' | bemenu -l 10 -i -n --line-height 35 \
+    --fn "$(font) 12" \
+    --nb '#16161d' \
+    --tb '#16161d' \
+    --fb '#16161d' \
+    --hb '#16161d'
+}
+
+get_id() {
+  echo "$ITEMS" | jq -r ". | select(.name == \"$1\") | .id"
+}
+
+get_otp() {
+  bit get totp "$1" | tr -d '\n'
+}
+
+ITEM="$(get_item)"
+ID="$(get_id "$ITEM")"
+
+get_otp "$ID" | $CLIP
