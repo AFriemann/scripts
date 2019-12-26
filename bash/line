@@ -1,0 +1,13 @@
+#! /bin/sh
+#
+# line.sh
+# Copyright (C) 2019 Aljosha Friemann <a.friemann@automate.wtf>
+#
+# Distributed under terms of the 3-clause BSD license.
+#
+
+LINE="$1"
+
+for file in ${@:2}; do
+  echo "$file: $(sed "${LINE}q;d" "$file")"
+done

@@ -1,14 +1,14 @@
-#!/bin/sh
+#!/bin/bash
 
 TIMEOUT="${BLOCK_TIMEOUT:-2}"
-TARGET="${BLOCK_TARGET:-8.8.8.8}"
+TARGET="${BLOCK_TARGET:-1.1.1.1}"
 
-ROUTES="$(ip route "${TARGET}/32")"
+ROUTES="$(ip route get "${TARGET}/32")"
 
 STATUS=offline
 
 if [ -n "$ROUTES" ]; then
-  if ping -c1 -W"$TIMEOUT" "$TARGET" &>/dev/null; then
+  if nc -n -w"$TIMEOUT" "$TARGET" 53 &>/dev/null; then
     STATUS=online
   fi
 fi

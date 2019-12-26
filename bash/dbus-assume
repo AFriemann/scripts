@@ -6,6 +6,9 @@ import_environment() {
   (( PID )) && for var; do
     IFS='=' read key val < <(egrep -z "^$var" /proc/$PID/environ)
 
+    echo "$key"
+    echo "$val"
+
     printf -v "$key" %s "$val"
     [[ ${!key} ]] && echo "export $key=$val"
   done

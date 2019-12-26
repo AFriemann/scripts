@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 #
 # bit.sh
 # Copyright (C) 2019 Aljosha Friemann <a.friemann@automate.wtf>
@@ -6,24 +6,21 @@
 # Distributed under terms of the 3-clause BSD license.
 #
 
-set -Eu -o pipefail
-IFS=$'\n\t'
-
 NAG=
 
 case $XDG_SESSION_TYPE in
-  wayland)
-    NAG="swaynag"
-    ;;
-  *)
-    NAG="i3-nagbar"
-    ;;
+wayland)
+  NAG="swaynag"
+  ;;
+*)
+  NAG="i3-nagbar"
+  ;;
 esac
 
 BW_PATH="$(readlink -f ~/.yarn/bin/bw)"
 
 _handle_error() {
-    echo "-ERROR-"
+  echo "-ERROR-"
 }
 
 trap _handle_error ERR
@@ -35,6 +32,6 @@ if test -z "$BW_SECRET"; then
 fi
 
 BW_SESSION="${BW_SESSION:-$(gopass "$BW_SECRET" | "$BW_PATH" unlock --raw 2>/dev/null)}" \
-    "$BW_PATH" $@
+  "$BW_PATH" $@
 
 # vim: fenc=utf-8:ts=4:sw=4:expandtab
