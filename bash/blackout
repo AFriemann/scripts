@@ -13,15 +13,15 @@ error() { red "$@"; }
 success() { green "$@"; }
 
 help() {
-    echo "usage: $0 on|check|next|off"
+  echo "usage: $0 on|check|next|off"
 }
 
 HOME="$(eval echo ~"$(logname)")"
 
 check-dependencies() {
-    command -v macchanger || return 1
-    command -v dhcpcd || return 1
-    command -v ip || return 1
+  command -v macchanger || return 1
+  command -v dhcpcd || return 1
+  command -v ip || return 1
 }
 
 list-devices() { ip link | egrep '^[0-9]+: (enp|eth|wlp|wlan)[a-z0-9]+' | awk -F':' '{ print $2 }' | tr -d ' '; }
@@ -35,101 +35,101 @@ persistent-hostname() { cat /etc/hostname | tr -d '[:space:]'; }
 
 check-mac() { [ "$(current-mac "$1")" = "$(persistent-mac "$1")" ]; }
 change-mac() {
-    ip link set "$1" down
-    macchanger -A "$1"
-    ip link set "$1" up
+  ip link set "$1" down
+  macchanger -A "$1"
+  ip link set "$1" up
 }
 restore-mac() {
-    ip link set "$1" down
-    macchanger -p "$1"
-    ip link set "$1" up
+  ip link set "$1" down
+  macchanger -p "$1"
+  ip link set "$1" up
 }
 
 link-sockets() {
-    for file in $(find "$HOME"/ -name "*$(persistent-hostname)*"); do
-        ln -v -s "$file" "${file/$(persistent-hostname)/$1}"
-    done
+  for file in $(find "$HOME"/ -name "*$(persistent-hostname)*"); do
+    ln -v -s "$file" "${file/$(persistent-hostname)/$1}"
+  done
 }
 clean-links() {
-    for file in $(find "$HOME"/ -name "*$(persistent-hostname)*"); do
-        local fname="$(basename "$file")"
+  for file in $(find "$HOME"/ -name "*$(persistent-hostname)*"); do
+    local fname="$(basename "$file")"
 
-        find "$(dirname "$file")" -iname "${fname/$(persistent-hostname)/*}" -type l -exec rm -v {} \;
-    done
+    find "$(dirname "$file")" -iname "${fname/$(persistent-hostname)/*}" -type l -exec rm -v {} \;
+  done
 }
 
 check-hostname() { [ "$(hostname)" = "$(persistent-hostname)" ]; }
 change-hostname() {
-    local new_hostname="$(uuidgen | shasum 2>/dev/null | head -c15)"
+  local new_hostname="$(uuidgen | shasum 2>/dev/null | head -c15)"
 
-    hostname "$new_hostname"
+  hostname "$new_hostname"
 
-    link-sockets "$new_hostname"
+  link-sockets "$new_hostname"
 }
 restore-hostname() {
-    hostname "$(persistent-hostname)"
+  hostname "$(persistent-hostname)"
 
-    clean-links
+  clean-links
 }
 
 check-root() { [ "$EUID" -eq 0 ]; }
 
 start() {
-    check-root || { error "needs to run as root" && exit 1; }
+  check-root || { error "needs to run as root" && exit 1; }
 
-    # drop-dhcp-lease
+  # drop-dhcp-lease
 
-    check-hostname && change-hostname
+  check-hostname && change-hostname
 
-    for dev in $(list-devices); do
-        check-mac "$dev" && change-mac "$dev"
-    done
+  for dev in $(list-devices); do
+    check-mac "$dev" && change-mac "$dev"
+  done
 
-    get-dhcp-lease
+  get-dhcp-lease
 }
 
 reload() {
-    check-root || { error "needs to run as root" && exit 1; }
+  check-root || { error "needs to run as root" && exit 1; }
 
-    # drop-dhcp-lease
+  # drop-dhcp-lease
 
-    clean-links && change-hostname
+  clean-links && change-hostname
 
-    for dev in $(list-devices); do
-        change-mac "$dev"
-    done
+  for dev in $(list-devices); do
+    change-mac "$dev"
+  done
 
-    get-dhcp-lease
+  get-dhcp-lease
 }
 
 status() {
-    RETCODE=0
+  RETCODE=0
 
-    check-hostname && warning "real hostname is set" && RETCODE=1 || success "temporary hostname set to $(hostname)"
+  check-hostname && warning "real hostname is set" && RETCODE=1 || success "temporary hostname set to $(hostname)"
 
-    for dev in $(list-devices); do
-        check-mac "$dev" && warning "real mac is set on $dev" && RETCODE=2 || success "temporary mac set on $dev"
-    done
+  for dev in $(list-devices); do
+    check-mac "$dev" && warning "real mac is set on $dev" && RETCODE=2 || success "temporary mac set on $dev"
+  done
 
-    return $RETCODE
+  return $RETCODE
 }
 
 stop() {
-    check || { clean-links && exit 0; }
+  status || { clean-links && exit 0; }
 
-    check-root || { error "needs to run as root" && exit 1; }
+  check-root || { error "needs to run as root" && exit 1; }
 
-    # drop-dhcp-lease
+  # drop-dhcp-lease
 
-    check-hostname || restore-hostname
+  check-hostname || restore-hostname
 
-    for dev in $(list-devices); do
-        check-mac "$dev" || restore-mac "$dev"
-    done
+  for dev in $(list-devices); do
+    check-mac "$dev" || restore-mac "$dev"
+  done
 
-    get-dhcp-lease
+  get-dhcp-lease
 
-    clean-links
+  clean-links
 }
 
 case $1 in
@@ -138,10 +138,10 @@ next) reload ;;
 check) status ;;
 off) stop ;;
 *)
-    [ -n "$*" ] && error "Unknown command: $*" && help && exit 1
+  [ -n "$*" ] && error "Unknown command: $*" && help && exit 1
 
-    reload
-    ;;
+  reload
+  ;;
 esac
 
 # vim: fenc=utf-8:ts=4:sw=4:expandtab
