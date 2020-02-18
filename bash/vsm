@@ -1,0 +1,19 @@
+#!/bin/bash
+
+case $1 in
+    enable)
+        ln -s "/etc/sv/$2" "/var/service/$2"
+        ;;
+    disable)
+        rm "/var/service/$2"
+        ;;
+    status)
+        sv status "$2"
+        ;;
+    start)
+        sv start "$2"
+        ;;
+    stop)
+        sv stop "$2"
+        ;;
+esac

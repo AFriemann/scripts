@@ -1,0 +1,7 @@
+#!/bin/bash
+
+gdbus monitor -y -d org.freedesktop.login1 | while read MSG; do
+  if [[ "$MSG" =~ org.freedesktop.login1.Session.Lock ]] || [[ "$MSG" =~ "org.freedesktop.login1.Manager.PrepareForSleep (true,)" ]]; then
+    $@
+  fi
+done
