@@ -1,0 +1,3 @@
+#!/bin/bash
+
+echo "Q" | openssl s_client -connect "$1":443 -servername "$1" | openssl x509 -text
