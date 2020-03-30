@@ -1,0 +1,7 @@
+#!/bin/sh
+
+LOCKER=/bin/physlock
+
+if ! /bin/pidof "$LOCKER" > /dev/null; then
+    /bin/physlock -ms -p "$(uname -no)"
+fi
