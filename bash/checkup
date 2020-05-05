@@ -3,14 +3,9 @@
 TIMEOUT="${BLOCK_TIMEOUT:-2}"
 TARGET="${BLOCK_TARGET:-1.1.1.1}"
 
-ROUTES="$(ip route get "${TARGET}/32")"
-
-STATUS=offline
-
-if [ -n "$ROUTES" ]; then
-  if nc -n -w"$TIMEOUT" "$TARGET" 53 &>/dev/null; then
-    STATUS=online
-  fi
+if nc -znw"$TIMEOUT" "$TARGET" 53 &>/dev/null; then
+  echo -e "online\nonline\nonline"
+  exit
 fi
 
-echo -n "$STATUS"
+echo -e "offline\noffline\noffline"

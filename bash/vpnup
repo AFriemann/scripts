@@ -3,7 +3,7 @@
 ROUTE="$(ip route list 10.10.0.0/16)"
 
 if [ -z "$ROUTE" ]; then
-  echo "down"
+  echo -e "down\ndisconnected\ndisconnected"
 else
-  echo "up"
+  echo -e "up\nconnected\nconnected"
 fi
