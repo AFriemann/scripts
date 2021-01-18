@@ -1,0 +1,17 @@
+#!/bin/sh
+
+XDM_PID=
+
+for PID in `pgrep xdm`; do
+	if `ps "$PID" | grep -q "xdm: :0"`; then
+		XDM_PID="$PID"
+	fi
+done
+
+[ -z "$XDM_PID" ] && exit 1
+
+SESSION_PID=`pgrep -P "$XDM_PID"`
+
+[ -z "$SESSION_PID" ] && exit 1
+
+echo `ps -o user= -p "$SESSION_PID"`

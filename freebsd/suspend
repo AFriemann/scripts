@@ -1,0 +1,12 @@
+#!/bin/sh
+
+CURRENT_USER=`/usr/local/bin/xcurrentuser`
+
+if [ -n "$CURRENT_USER" ]; then
+	export DISPLAY=":0"
+	export XAUTHORITY="/home/$CURRENT_USER/.Xauthority"
+
+	/usr/local/bin/lock &
+fi
+
+/usr/sbin/acpiconf -s 3
