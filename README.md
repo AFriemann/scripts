@@ -1,6 +1,5 @@
 scripts
 =======
 
-A collection of more or less useful scripts.
-
-**Beerware all the way!**
+Mostly just a dump for stuff I hacked together and none of it particularly
+useful.
