@@ -1,0 +1,10 @@
+#!/bin/bash
+
+array=( "$@" )
+
+num=${#array[@]}
+sum=$(dc <<< '[+]sa[z2!>az2!>b]sb'"${array[*]}lbxp")
+
+avg=$(echo "$sum / $num" | bc -l)
+
+printf '%0.2f\n' "$avg"
