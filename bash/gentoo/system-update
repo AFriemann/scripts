@@ -17,8 +17,6 @@ confirm() {
   esac
 }
 
-eix-sync
-
 eselect news read
 
 echo && confirm "continue?" || exit 1

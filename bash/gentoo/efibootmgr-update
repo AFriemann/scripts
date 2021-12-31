@@ -1,0 +1,36 @@
+#!/bin/bash
+
+mount /dev/nvme0n1p1 /mnt/efi
+
+install-new() {
+	for dir in $(find /usr/src -type d -name "linux-*-gentoo-dist*"); do
+		tmp="${dir#*-}"
+		version="${tmp%%-*}"
+	
+		cp -vf "${dir}/arch/x86/boot/bzImage" "/mnt/efi/EFI/Gentoo/bzImage-${version}.efi" 2>/dev/null
+	
+		if efibootmgr -v | grep -q "gentoo-$version"; then
+			echo "${version} already installed"
+		else
+			echo "adding ${version} to bootmanager"
+	
+			efibootmgr -c -L "gentoo-${version}" -d /dev/nvme0n1 -p1 -l "\EFI\Gentoo\\bzImage-${version}.efi" >/dev/null
+		fi
+	done
+}
+
+clean-old() {
+	for entry in $(efibootmgr -v | grep "gentoo-" | awk '{ print $2 }'); do
+		version="${entry#*-}"
+
+		if ! test -d /usr/src/linux-${version}-gentoo-dist*; then
+			bootnum="$(efibootmgr -v | grep "gentoo-${version}" | sed "s/^Boot\([0-9]\+\).*/\1/")"
+
+			echo "removing obsolete version $version on boot number $bootnum"
+
+			efibootmgr -b "$bootnum" -B
+		fi
+	done
+}
+
+install-new && clean-old
