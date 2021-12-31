@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#set -xe
+
+SCREEN_AREA="$(~/.local/bin/focused-screen)"
+SCREEN_SIZE="${SCREEN_AREA%%+*}"
+
+SCREEN_HEIGHT=${SCREEN_SIZE%%x*}
+SCREEN_WIDTH="${SCREEN_SIZE##*x}"
+
+HEIGHT=$(echo "$SCREEN_HEIGHT * 0.95" | bc | awk -F'.' '{ print $1 }')
+WIDTH=$(echo "$SCREEN_WIDTH * 0.95" | bc | awk -F'.' '{ print $1 }')
+
+maim -g "$SCREEN_AREA" | feh -g "${HEIGHT}x${WIDTH}" --scale-down -- - &
+
+pid="$!"
+
+# Wait for the window to open and grab its window ID
+winid=''
+while : ; do
+  winid="`wmctrl -lp | awk -vpid=$pid '$3==pid {print $1; exit}'`"
+  [[ -z "${winid}" ]] || break
+  sleep 0.15
+done
+
+# Focus the window we found
+wmctrl -ia "${winid}"
+i3-msg floating enable > /dev/null
+wmctrl -g "${HEIGHT},${WIDTH}" -a "${winid}"
+
+# Move it to the center for good measure
+i3-msg move position center > /dev/null
+
+maim -s | xclip -selection clipboard -t image/png
+
+kill "${pid}"
+
+#wait "$new_pid"
