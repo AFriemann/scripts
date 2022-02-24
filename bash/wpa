@@ -1,0 +1,75 @@
+#!/bin/bash
+
+msg() { printf "%s%s$(tput sgr0): %s\n" "$1" "$2" "$3"; }
+
+error() { msg "$(tput setaf 1)" ERROR "$@" && exit 1; }
+info() { msg "$(tput setaf 2)" INFO "$@"; }
+warning() { msg "$(tput setaf 3)" WARN "$@"; }
+
+help() {
+  case $1 in
+    add)
+      echo "usage: $0 add INPUT"
+      echo
+      echo "options:"
+      echo "	INPUT - use '-' to read from stdin"
+      ;;
+    *)
+      echo "usage: $0 COMMAND"
+      echo
+      echo "commands:"
+      echo "	add          - add a new network"
+      echo "	reconfigure  - reload current configuration"
+      echo "	save         - save current configuration"
+      ;;
+  esac
+}
+
+add_network() {
+  #input="WIFI:S:SOME_SSID;T:WPA;P:SuperSecurePSK;H:false;;"
+  input=$1
+
+  IFS=';' tokens=( $input )
+
+  test "${#tokens[@]}" -eq 5 || error "unexpected input string: $input"
+
+  WIFI=${tokens[0]}
+  P=${tokens[2]}
+
+  ssid=${WIFI##*:}
+  psk=${P##*:}
+
+  network_id=$(wpa_cli add_network | grep -v "Selected interface" | tr -d '\n')
+
+  wpa_cli set_network "$network_id" ssid "\"$ssid\""
+  wpa_cli set_network "$network_id" psk "\"$psk\""
+
+  wpa_cli enable_network "$network_id"
+}
+
+case $1 in
+  add)
+    input=
+
+    case $2 in
+      -|"")
+        while read input; do
+          break
+        done < /dev/stdin
+        ;;
+      *)
+        input="$2"
+    esac
+
+    add_network "$input"
+    ;;
+  reconfigure)
+    wpa_cli reconfigure
+    ;;
+  save)
+    wpa_cli save config
+    ;;
+  *)
+    help && exit 1
+    ;;
+esac
