@@ -1,0 +1,41 @@
+#!/bin/sh
+
+error() {
+  echo "$@" && exit 1
+}
+
+MODE=edit
+
+for arg in "$@"; do
+  case $arg in
+    -s|--show|-l|--list)
+      MODE=show
+      shift # past argument=value
+      ;;
+    -i|--init)
+      MODE=init
+      ;;
+    *)
+      # unknown option
+      ;;
+  esac
+done
+
+TODO_PATH="${HOME}/TODO"
+
+case "$MODE" in
+  init)
+    touch "$TODO_PATH"
+    ;;
+  edit)
+    test -f "$TODO_PATH" || error "TODO file not initialized, run 'todo --init'"
+    $EDITOR "$TODO_PATH"
+    ;;
+  show)
+    test -f "$TODO_PATH" || error "TODO file not initialized, run 'todo --init'"
+    cat "$TODO_PATH"
+    ;;
+  *)
+    error "internal error (unknown mode)"
+    ;;
+esac
