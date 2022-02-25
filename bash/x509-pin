@@ -1,5 +1,15 @@
 #!/bin/bash
 
+help() {
+  echo "usage: $0 DOMAIN CERTIFICATE"
+}
+
+case "$1" in
+  -h|--help)
+    help && exit
+  ;;
+esac
+
 DOMAIN="$1"
 CERT="$2"
 
