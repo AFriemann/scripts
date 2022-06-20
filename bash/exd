@@ -17,7 +17,8 @@ get-display() {
 is-active() {
   # eDP1 connected primary 2560x1440+0+0 (normal left inverted right x axis y axis) 310mm x 170mm
   # HDMI1 connected (normal left inverted right x axis y axis)
-  local WORDS=$(get-display "$1" | wc -w)
+  local WORDS
+  WORDS=$(get-display "$1" | wc -w)
 
   [[ $WORDS -gt 10 ]]
 }
@@ -59,7 +60,7 @@ lo() {
   for display in $(connected-displays); do
     case $display in
     "$PRIMARY") continue ;;
-    *) single-lo $display ;;
+    *) single-lo "$display" ;;
     esac
   done
 }
@@ -108,7 +109,7 @@ off() {
   done
 }
 
-if [[ -z "$@" ]]; then
+if [[ -z "$*" ]]; then
   toggle
 else
   $@

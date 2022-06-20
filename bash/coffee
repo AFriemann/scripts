@@ -5,12 +5,12 @@ coffee() {
     on)
       xset s off
       xset -dpms
-      usv stop xscreensaver
+      #usv stop xscreensaver
       ;;
     off)
       xset s on
       xset +dpms
-      usv start xscreensaver
+      #usv start xscreensaver
       ;;
     *)
       echo "usage: coffee on|off" && return 0
