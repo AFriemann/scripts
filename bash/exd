@@ -10,6 +10,10 @@ connected-displays() {
   xrandr | grep " connected" | awk '{ print $1 }'
 }
 
+stale-displays() {
+  xrandr | grep -E " disconnected [0-9]+x[0-9]+[0-9]+\+[0-9]+" | awk '{ print $1 }'
+}
+
 get-display() {
   xrandr | grep "^$1"
 }
@@ -51,6 +55,11 @@ single-ro() {
   xrandr --output "$1" --auto --right-of "$PRIMARY"
 }
 
+single-above() {
+  echo "turning $1 on right of $PRIMARY"
+  xrandr --output "$1" --auto --above "$PRIMARY"
+}
+
 single-off() {
   echo "turning $1 off"
   xrandr --output "$1" --off
@@ -70,6 +79,15 @@ ro() {
     case $display in
     "$PRIMARY") continue ;;
     *) single-ro "$display" ;;
+    esac
+  done
+}
+
+above() {
+  for display in $(connected-displays); do
+    case $display in
+    "$PRIMARY") continue ;;
+    *) single-above "$display" ;;
     esac
   done
 }
@@ -106,6 +124,12 @@ off() {
     "$PRIMARY") single-on "$display" ;;
     *) single-off "$display" ;;
     esac
+  done
+}
+
+stale() {
+  for display in $(stale-displays); do
+    single-off "$display";
   done
 }
 

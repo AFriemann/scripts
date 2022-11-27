@@ -21,13 +21,18 @@ eselect news read
 
 echo && confirm "continue?" || exit 1
 
+info "installing security updates"
+
+read -ra vulners < <(glsa-check -t all)
+glsa-check -f "${vulners[@]}"
+
 info "running package update"
 
-emerge -avuDN --with-bdeps y @world || error "package update failed"
+emerge -avuDN --with-bdeps y @world | error "package update failed"
 
-# info "running etc-update"
-#
-# etc-update || error "etc-update failed"
+info "rebuilding live packages"
+
+smart-live-rebuild
 
 if command -v lafilefixer; then
   info "running lafilefixer"
