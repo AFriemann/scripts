@@ -1,0 +1,12 @@
+#!/bin/bash
+
+EPOCH="${1}"
+
+length=${#EPOCH}
+
+# if it has milliseconds we need to divide
+if [[ $length -gt 10 ]]; then
+	EPOCH=$((EPOCH / 1000))
+fi
+
+date -d@"$EPOCH"
